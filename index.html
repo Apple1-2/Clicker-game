@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clicker Game с Престижем</title>
+<style>
+  body { font-family: sans-serif; text-align: center; margin: 0; padding: 0; background: #f5f5f5; transition: background 0.5s;}
+  header { background: #4caf50; color: white; padding: 30px 0; }
+  main { padding: 40px 20px; }
+  .score { font-size: 24px; margin: 20px 0; }
+  button { background: #4caf50; border: none; color: white; padding: 12px 25px; font-size: 16px; border-radius: 8px; cursor: pointer; margin: 10px; transition: 0.3s;}
+  button:hover { background-color: #45a049; }
+  .message { margin-top: 20px; font-size: 18px; font-weight: bold; color: #333; }
+  .shop-container { margin-top: 30px; }
+  #shop { display: none; margin-top: 20px; padding: 20px; background: #eee; border-radius: 10px; max-width: 500px; margin-left: auto; margin-right: auto; }
+  .shop-item { margin: 15px 0; }
+  .progress-bar-container { width: 80%; height: 25px; background: #ccc; border-radius: 12px; margin: 20px auto; overflow: hidden; }
+  .progress-bar { height: 100%; width: 0%; background: #4caf50; transition: width 0.3s; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Clicker Game + Престиж</h1>
+  <p>Кликай, покупай, улучшай!</p>
+</header>
+
+<main>
+  <div class="score">Очки: <span id="points">0</span></div>
+  
+  <!-- Прогресс-бар -->
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progressBar"></div>
+  </div>
+
+  <button onclick="addPoint()">Нажми меня</button>
+  <div class="message" id="message"></div>
+
+  <div class="shop-container">
+    <button onclick="toggleShop()">🛒 Открыть магазин</button>
+    <div id="shop"></div>
+  </div>
+
+  <div style="margin-top:30px;">
+    <button onclick="resetGame()" style="background-color: crimson;">🗑️ Сбросить прогресс</button>
+  </div>
+</main>
+
+<footer>© 2025 | Прогресс сохраняется автоматически</footer>
+
+<audio id="clickSound" src="https://www.fesliyanstudios.com/play-mp3/387" preload="auto"></audio>
+<audio id="buySound" src="https://www.fesliyanstudios.com/play-mp3/362" preload="auto"></audio>
+
+<script>
+let score = 0;
+let clickPower = 1000;
+let prestige = 0;
+const prestigeLevels = [10000, 25000]; // очки для 1 и 2 престижа
+const pointsEl = document.getElementById("points");
+const messageEl = document.getElementById("message");
+const progressBar = document.getElementById("progressBar");
+const shopEl = document.getElementById("shop");
+
+const clickUpgrades = [
+  { title: "Клик x2", power: 2, cost: 50 },
+  { title: "Клик x4", power: 4, cost: 150 },
+  { title: "Клик x6", power: 6, cost: 400 },
+  { title: "Клик x8", power: 8, cost: 850 },
+  { title: "Клик x10", power: 10, cost: 1500 },
+  { title: "Клик x12", power: 12, cost: 2500 },
+  { title: "Клик x15", power: 15, cost: 4000 }
+];
+
+let upgrades = [...clickUpgrades];
+
+function updateScore() {
+  pointsEl.textContent = score;
+  updateProgressBar();
+  checkPrestige();
+}
+
+function message(text) { messageEl.textContent = text; }
+function playSound(id) { const s=document.getElementById(id); if(s){ s.currentTime=0; s.play(); } }
+
+function addPoint() {
+  score += clickPower;
+  updateScore();
+  playSound("clickSound");
+  renderShop();
+  saveProgress();
+}
+
+function toggleShop() { shopEl.style.display = shopEl.style.display==="none"?"block":"none"; }
+
+function buyUpgrade(index) {
+  const item = upgrades[index];
+  if (!item || score < item.cost) { message("Недостаточно очков."); return; }
+  score -= item.cost;
+  clickPower = item.power;
+  message(`Теперь каждый клик: ×${item.power}`);
+  upgrades.splice(index,1);
+  renderShop();
+  updateScore();
+  playSound("buySound");
+  saveProgress();
+}
+
+function renderShop() {
+  shopEl.innerHTML = "";
+  upgrades.forEach((u,i)=>{
+    const div = document.createElement("div");
+    div.className = "shop-item";
+    div.innerHTML = `<button onclick="buyUpgrade(${i})">${u.title} (${u.cost})</button>`;
+    shopEl.appendChild(div);
+  });
+}
+
+function resetGame() {
+  if(confirm("Вы уверены, что хотите сбросить прогресс?")){
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+function saveProgress() {
+  localStorage.setItem("clickerData", JSON.stringify({score, clickPower, prestige, upgrades}));
+}
+
+function loadProgress() {
+  const saved = localStorage.getItem("clickerData");
+  if(saved){
+    const data=JSON.parse(saved);
+    score=data.score||0;
+    clickPower=data.clickPower||1;
+    prestige=data.prestige||0;
+    upgrades=data.upgrades||clickUpgrades;
+  }
+}
+
+function updateProgressBar(){
+  let max=prestige<prestigeLevels.length?prestigeLevels[prestige]:prestigeLevels[prestigeLevels.length-1];
+  let percent = Math.min((score/max)*100,100);
+  progressBar.style.width = percent + "%";
+}
+
+function checkPrestige(){
+  if(prestige<prestigeLevels.length && score>=prestigeLevels[prestige]){
+    if(confirm(`Вы достигли ${prestigeLevels[prestige]} очков! Выполнить престиж?`)){
+      prestige++;
+      score=0;
+      clickPower=1+prestige;
+      upgrades=[...clickUpgrades];
+      message(`Престиж ${prestige} активирован! Стартовый клик: +${clickPower}`);
+      updateScore();
+      renderShop();
+      saveProgress();
+    }
+  }
+}
+
+loadProgress();
+renderShop();
+updateScore();
+</script>
+</body>
+</html>
