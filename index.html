@@ -1,167 +1,434 @@
-<!DOCTYPE html>
+<<!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clicker Game с Престижем</title>
-<style>
-  body { font-family: sans-serif; text-align: center; margin: 0; padding: 0; background: #f5f5f5; transition: background 0.5s;}
-  header { background: #4caf50; color: white; padding: 30px 0; }
-  main { padding: 40px 20px; }
-  .score { font-size: 24px; margin: 20px 0; }
-  button { background: #4caf50; border: none; color: white; padding: 12px 25px; font-size: 16px; border-radius: 8px; cursor: pointer; margin: 10px; transition: 0.3s;}
-  button:hover { background-color: #45a049; }
-  .message { margin-top: 20px; font-size: 18px; font-weight: bold; color: #333; }
-  .shop-container { margin-top: 30px; }
-  #shop { display: none; margin-top: 20px; padding: 20px; background: #eee; border-radius: 10px; max-width: 500px; margin-left: auto; margin-right: auto; }
-  .shop-item { margin: 15px 0; }
-  .progress-bar-container { width: 80%; height: 25px; background: #ccc; border-radius: 12px; margin: 20px auto; overflow: hidden; }
-  .progress-bar { height: 100%; width: 0%; background: #4caf50; transition: width 0.3s; }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Clicker Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-light: #f4f4f4;
+      --bg-dark: #1e1e1e;
+      --text-light: #000;
+      --text-dark: #fff;
+      --button-radius: 999px;
+      --transition: 0.3s ease;
+    }
+
+    body {
+      font-family: 'Orbitron', sans-serif;
+      text-align: center;
+      background-color: var(--bg-light);
+      color: var(--text-light);
+      margin: 0;
+      transition: var(--transition);
+    }
+
+    body.dark {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    header, footer {
+      background: #333;
+      color: white;
+      padding: 10px;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 18px;
+      margin: 10px;
+      cursor: pointer;
+      border-radius: var(--button-radius);
+      border: none;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    .click-button {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    .shop-button {
+      background-color: #2196f3;
+      color: white;
+    }
+
+    .theme-button {
+      background-color: #ff9800;
+      color: white;
+    }
+
+    .reset-button {
+      background-color: crimson;
+      color: white;
+    }
+
+    .location-toggle {
+      background-color: #673ab7;
+      color: white;
+    }
+
+    .score {
+      font-size: 24px;
+      margin: 20px 0;
+    }
+
+    .message {
+      font-weight: bold;
+      min-height: 1.5em;
+    }
+
+    .shop-container {
+      margin: 20px 0;
+    }
+
+    #shop {
+      display: none;
+      padding: 10px;
+      border: 2px solid #ccc;
+      background: white;
+      max-width: 500px;
+      margin: 0 auto;
+      border-radius: 12px;
+    }
+
+    body.dark #shop {
+      background: #2a2a2a;
+      color: white;
+      border-color: #555;
+    }
+
+    .item {
+      margin: 10px;
+    }
+
+    .highlight {
+      outline: 4px solid red;
+    }
+
+    .decoration {
+      position: absolute;
+      font-size: 32px;
+      animation: float 4s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+      100% { transform: translateY(0); }
+    }
+
+    .point-float {
+      position: absolute;
+      font-weight: bold;
+      color: orange;
+      animation: floatUp 1s ease forwards;
+      pointer-events: none;
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-40px); }
+    }
+
+    .progress-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin: 20px auto;
+      width: fit-content;
+    }
+
+    .prestige-notice {
+      background: #ffd54f;
+      padding: 10px;
+      border-radius: var(--button-radius);
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
 
-<header>
-  <h1>Clicker Game + Престиж</h1>
-  <p>Кликай, покупай, улучшай!</p>
-</header>
+  <header>
+    <h1>Clicker Game</h1>
+    <p>Кликай, покупай, улучшай!</p>
+    <button class="theme-button" onclick="toggleTheme()">🌙 / ☀️</button>
+  </header>
 
-<main>
-  <div class="score">Очки: <span id="points">0</span></div>
-  
-  <!-- Прогресс-бар -->
-  <div class="progress-bar-container">
-    <div class="progress-bar" id="progressBar"></div>
-  </div>
+  <main>
+    <div class="score">
+      Очки: <span id="points">0</span><br>
+      Всего: <span id="totalPoints">0</span><br>
+      Престижей: <span id="prestigeCount">0</span>
+    </div>
 
-  <button onclick="addPoint()">Нажми меня</button>
-  <div class="message" id="message"></div>
+    <button class="click-button" onclick="addPoint()">Нажми меня</button>
+    <div class="message" id="message"></div>
 
-  <div class="shop-container">
-    <button onclick="toggleShop()">🛒 Открыть магазин</button>
-    <div id="shop"></div>
-  </div>
+    <div class="progress-wrapper">
+      <button class="location-toggle" onclick="openLocationMenu()">🌍 Локации</button>
+      <div id="prestigeNotice" class="prestige-notice" style="display:none;">
+        Доступен престиж!<br>
+        <button onclick="doPrestige()">Сделать престиж</button>
+      </div>
+    </div>
 
-  <div style="margin-top:30px;">
-    <button onclick="resetGame()" style="background-color: crimson;">🗑️ Сбросить прогресс</button>
-  </div>
-</main>
+    <div class="shop-container">
+      <button class="shop-button" onclick="toggleShop()">🛒 Открыть магазин</button>
+      <div id="shop"></div>
+    </div>
 
-<footer>© 2025 | Прогресс сохраняется автоматически</footer>
+    <button class="reset-button" onclick="confirmReset()">🗑️ Сбросить прогресс</button>
+  </main>
 
-<audio id="clickSound" src="https://www.fesliyanstudios.com/play-mp3/387" preload="auto"></audio>
-<audio id="buySound" src="https://www.fesliyanstudios.com/play-mp3/362" preload="auto"></audio>
+  <footer>
+    © 2025 | Прогресс сохраняется автоматически
+  </footer>
 
-<script>
-let score = 0;
-let clickPower = 1;
-let prestige = 0;
-const prestigeLevels = [10000, 25000]; // очки для 1 и 2 престижа
-const pointsEl = document.getElementById("points");
-const messageEl = document.getElementById("message");
-const progressBar = document.getElementById("progressBar");
-const shopEl = document.getElementById("shop");
+  <audio id="clickSound" src="https://www.fesliyanstudios.com/play-mp3/387" preload="auto"></audio>
 
-const clickUpgrades = [
-  { title: "Клик x2", power: 2, cost: 50 },
-  { title: "Клик x4", power: 4, cost: 150 },
-  { title: "Клик x6", power: 6, cost: 400 },
-  { title: "Клик x8", power: 8, cost: 850 },
-  { title: "Клик x10", power: 10, cost: 1500 },
-  { title: "Клик x12", power: 12, cost: 2500 },
-  { title: "Клик x15", power: 15, cost: 4000 }
-];
+  <script>
+    let points = 0;
+    let totalPoints = 0;
+    let clickPower = 1;
+    let prestigeLevel = 0;
+    let autoClickers = 0;
+    let autoClickPower = 1;
+    let autoClickCost = 500;
+    let shopIndex = 0;
+    let decorationsShown = [];
+    let lastTime = Date.now();
 
-let upgrades = [...clickUpgrades];
+    const clickMultipliers = [
+      { multiplier: 5, cost: 200 },
+      { multiplier: 8, cost: 550 },
+      { multiplier: 10, cost: 1200 },
+      { multiplier: 12, cost: 2000 },
+      { multiplier: 15, cost: 3000 }
+    ];
 
-function updateScore() {
-  pointsEl.textContent = score;
-  updateProgressBar();
-  checkPrestige();
-}
+    const autoDecor = [
+      { points: 100, emoji: "🎈" },
+      { points: 500, emoji: "🧸" },
+      { points: 1000, emoji: "🌟" },
+      { points: 2500, emoji: "🎁" },
+      { points: 5000, emoji: "🪄" },
+      { points: 10000, emoji: "🏆" }
+    ];
 
-function message(text) { messageEl.textContent = text; }
-function playSound(id) { const s=document.getElementById(id); if(s){ s.currentTime=0; s.play(); } }
-
-function addPoint() {
-  score += clickPower;
-  updateScore();
-  playSound("clickSound");
-  renderShop();
-  saveProgress();
-}
-
-function toggleShop() { shopEl.style.display = shopEl.style.display==="none"?"block":"none"; }
-
-function buyUpgrade(index) {
-  const item = upgrades[index];
-  if (!item || score < item.cost) { message("Недостаточно очков."); return; }
-  score -= item.cost;
-  clickPower = item.power;
-  message(`Теперь каждый клик: ×${item.power}`);
-  upgrades.splice(index,1);
-  renderShop();
-  updateScore();
-  playSound("buySound");
-  saveProgress();
-}
-
-function renderShop() {
-  shopEl.innerHTML = "";
-  upgrades.forEach((u,i)=>{
-    const div = document.createElement("div");
-    div.className = "shop-item";
-    div.innerHTML = `<button onclick="buyUpgrade(${i})">${u.title} (${u.cost})</button>`;
-    shopEl.appendChild(div);
-  });
-}
-
-function resetGame() {
-  if(confirm("Вы уверены, что хотите сбросить прогресс?")){
-    localStorage.clear();
-    location.reload();
-  }
-}
-
-function saveProgress() {
-  localStorage.setItem("clickerData", JSON.stringify({score, clickPower, prestige, upgrades}));
-}
-
-function loadProgress() {
-  const saved = localStorage.getItem("clickerData");
-  if(saved){
-    const data=JSON.parse(saved);
-    score=data.score||0;
-    clickPower=data.clickPower||1;
-    prestige=data.prestige||0;
-    upgrades=data.upgrades||clickUpgrades;
-  }
-}
-
-function updateProgressBar(){
-  let max=prestige<prestigeLevels.length?prestigeLevels[prestige]:prestigeLevels[prestigeLevels.length-1];
-  let percent = Math.min((score/max)*100,100);
-  progressBar.style.width = percent + "%";
-}
-
-function checkPrestige(){
-  if(prestige<prestigeLevels.length && score>=prestigeLevels[prestige]){
-    if(confirm(`Вы достигли ${prestigeLevels[prestige]} очков! Выполнить престиж?`)){
-      prestige++;
-      score=0;
-      clickPower=1+prestige;
-      upgrades=[...clickUpgrades];
-      message(`Престиж ${prestige} активирован! Стартовый клик: +${clickPower}`);
-      updateScore();
-      renderShop();
-      saveProgress();
+    function addPoint() {
+      points += clickPower;
+      totalPoints += clickPower;
+      document.getElementById("points").textContent = points;
+      document.getElementById("totalPoints").textContent = totalPoints;
+      document.getElementById("clickSound").play();
+      showPointFloat("+" + clickPower);
+      updatePrestigeNotice();
+      autoDecorate();
+      save();
     }
-  }
-}
 
-loadProgress();
-renderShop();
-updateScore();
-</script>
+    function showPointFloat(text) {
+      const float = document.createElement("div");
+      float.className = "point-float";
+      float.textContent = text;
+      const btn = document.querySelector(".click-button");
+      const rect = btn.getBoundingClientRect();
+      float.style.left = rect.left + rect.width / 2 + "px";
+      float.style.top = rect.top + "px";
+      document.body.appendChild(float);
+      setTimeout(() => float.remove(), 1000);
+    }
+
+    function toggleShop() {
+      const shop = document.getElementById("shop");
+      shop.style.display = shop.style.display === "none" ? "block" : "none";
+      updateShop();
+    }
+
+    function updateShop() {
+      const shop = document.getElementById("shop");
+      shop.innerHTML = "";
+
+      if (shopIndex < clickMultipliers.length) {
+        const upgrade = clickMultipliers[shopIndex];
+        let div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `Клик x${upgrade.multiplier} — ${upgrade.cost} очков
+          <button onclick="buyMultiplier(${shopIndex})">Купить</button>`;
+        shop.appendChild(div);
+      }
+
+      let div = document.createElement("div");
+      div.className = "item";
+      div.innerHTML = `Автокликер +${autoClickPower} — ${autoClickCost} очков
+        <button onclick="buyAutoClicker()">Купить</button>`;
+      shop.appendChild(div);
+    }
+
+    function buyMultiplier(index) {
+      const upgrade = clickMultipliers[index];
+      if (points >= upgrade.cost) {
+        points -= upgrade.cost;
+        clickPower = upgrade.multiplier + prestigeLevel;
+        shopIndex++;
+        showMessage(`Клик теперь x${clickPower}!`, "green");
+        updateShop();
+        save();
+      } else {
+        highlightScreen();
+      }
+    }
+
+    function buyAutoClicker() {
+      if (points >= autoClickCost) {
+        points -= autoClickCost;
+        autoClickers += autoClickPower;
+        autoClickPower = autoClickers < 6 ? Math.floor(autoClickPower * 1.5) : Math.floor(autoClickPower * 1.3);
+        autoClickCost += 150;
+        showMessage(`Автокликеров: ${autoClickers}`, "blue");
+        updateShop();
+        save();
+      } else {
+        highlightScreen();
+      }
+    }
+
+    function autoClickLoop() {
+      let now = Date.now();
+      let elapsed = Math.floor((now - lastTime) / 5000);
+      if (elapsed > 0 && autoClickers > 0) {
+        points += elapsed * autoClickers;
+        totalPoints += elapsed * autoClickers;
+        lastTime = now;
+        document.getElementById("points").textContent = points;
+        document.getElementById("totalPoints").textContent = totalPoints;
+        updatePrestigeNotice();
+        autoDecorate();
+        save();
+      }
+      setTimeout(autoClickLoop, 1000);
+    }
+
+    function showMessage(msg, color) {
+      const el = document.getElementById("message");
+      el.textContent = msg;
+      el.style.color = color;
+      setTimeout(() => el.textContent = "", 2000);
+    }
+
+    function highlightScreen() {
+      document.body.classList.add("highlight");
+      setTimeout(() => document.body.classList.remove("highlight"), 500);
+    }
+
+    function confirmReset() {
+      if (confirm("Сбросить весь прогресс?")) {
+        localStorage.clear();
+        location.reload();
+      }
+    }
+
+    function updatePrestigeNotice() {
+      const nextPrestige = prestigeLevel === 0 ? 10000 : 25000;
+      const notice = document.getElementById("prestigeNotice");
+      if (points >= nextPrestige) {
+        notice.style.display = "block";
+      } else {
+        notice.style.display = "none";
+      }
+    }
+
+    function doPrestige() {
+      prestigeLevel++;
+      clickPower = 1 + prestigeLevel;
+      points = 0;
+      autoClickers = 0;
+      autoClickPower = 1;
+      autoClickCost = 500;
+      shopIndex = 0;
+      decorationsShown = [];
+      alert(`Престиж #${prestigeLevel}! Клик теперь +${clickPower}`);
+      document.getElementById("prestigeCount").textContent = prestigeLevel;
+      document.querySelectorAll(".decoration").forEach(e => e.remove());
+      save();
+      updateShop();
+      updatePrestigeNotice();
+    }
+
+    function autoDecorate() {
+      autoDecor.forEach(obj => {
+        if (points >= obj.points && !decorationsShown.includes(obj.emoji)) {
+          addDecoration(obj.emoji);
+          decorationsShown.push(obj.emoji);
+        }
+      });
+    }
+
+    function addDecoration(emoji) {
+      let el = document.createElement("div");
+      el.className = "decoration";
+      el.textContent = emoji;
+      el.style.top = Math.random() * 80 + "%";
+      el.style.left = Math.random() * 80 + "%";
+      document.body.appendChild(el);
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+    }
+
+    function openLocationMenu() {
+      const loc = prompt("Введите локацию:\n1 — main.html\n2 — forest.html");
+      if (loc === "1") location.href = "main.html";
+      else if (loc === "2") location.href = "forest.html";
+    }
+
+    function save() {
+      localStorage.setItem("clickerSave", JSON.stringify({
+        points, totalPoints, clickPower, prestigeLevel,
+        autoClickers, autoClickPower, autoClickCost,
+        shopIndex, decorationsShown, lastTime: Date.now()
+      }));
+    }
+
+    function load() {
+      let data = JSON.parse(localStorage.getItem("clickerSave"));
+      if (data) {
+        points = data.points ?? 0;
+        totalPoints = data.totalPoints ?? data.points ?? 0;
+        clickPower = data.clickPower ?? 1;
+        prestigeLevel = data.prestigeLevel ?? 0;
+        autoClickers = data.autoClickers ?? 0;
+        autoClickPower = data.autoClickPower ?? 1;
+        autoClickCost = data.autoClickCost ?? 500;
+        shopIndex = data.shopIndex ?? 0;
+        decorationsShown = data.decorationsShown ?? [];
+        lastTime = data.lastTime ?? Date.now();
+      } else {
+        totalPoints = 0;
+      }
+
+      document.getElementById("points").textContent = points;
+      document.getElementById("totalPoints").textContent = totalPoints;
+      document.getElementById("prestigeCount").textContent = prestigeLevel;
+      updateShop();
+      updatePrestigeNotice();
+      autoDecorate();
+    }
+
+    load();
+    autoClickLoop();
+  </script>
 </body>
 </html>
