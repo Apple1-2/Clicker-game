@@ -1,434 +1,529 @@
-<<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Clicker Game</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg-light: #f4f4f4;
-      --bg-dark: #1e1e1e;
-      --text-light: #000;
-      --text-dark: #fff;
-      --button-radius: 999px;
-      --transition: 0.3s ease;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Clicker Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-light: #f4f4f4;
+  --bg-dark: #1e1e1e;
+  --text-light: #000;
+  --text-dark: #fff;
+  --button-radius: 999px;
+  --transition: 0.3s ease;
+}
 
-    body {
-      font-family: 'Orbitron', sans-serif;
-      text-align: center;
-      background-color: var(--bg-light);
-      color: var(--text-light);
-      margin: 0;
-      transition: var(--transition);
-    }
+body {
+  font-family: 'Orbitron', sans-serif;
+  text-align: center;
+  background-color: var(--bg-light);
+  color: var(--text-light);
+  margin: 0;
+  transition: var(--transition);
+}
 
-    body.dark {
-      background-color: var(--bg-dark);
-      color: var(--text-dark);
-    }
+body.dark {
+  background-color: var(--bg-dark);
+  color: var(--text-dark);
+}
 
-    header, footer {
-      background: #333;
-      color: white;
-      padding: 10px;
-    }
+header, footer {
+  background: #333;
+  color: white;
+  padding: 10px;
+}
 
-    button {
-      padding: 12px 24px;
-      font-size: 18px;
-      margin: 10px;
-      cursor: pointer;
-      border-radius: var(--button-radius);
-      border: none;
-      transition: 0.2s;
-    }
+button {
+  padding: 12px 24px;
+  font-size: 18px;
+  margin: 10px;
+  cursor: pointer;
+  border-radius: var(--button-radius);
+  border: none;
+  transition: 0.2s;
+}
 
-    button:hover {
-      transform: scale(1.05);
-    }
+button:hover {
+  transform: scale(1.05);
+}
 
-    .click-button {
-      background-color: #4caf50;
-      color: white;
-    }
+.click-button {
+  background-color: #4caf50;
+  color: white;
+}
 
-    .shop-button {
-      background-color: #2196f3;
-      color: white;
-    }
+.shop-button {
+  background-color: #2196f3;
+  color: white;
+}
 
-    .theme-button {
-      background-color: #ff9800;
-      color: white;
-    }
+.theme-button {
+  background-color: #ff9800;
+  color: white;
+}
 
-    .reset-button {
-      background-color: crimson;
-      color: white;
-    }
+.reset-button {
+  background-color: crimson;
+  color: white;
+}
 
-    .location-toggle {
-      background-color: #673ab7;
-      color: white;
-    }
+.location-toggle {
+  background-color: #673ab7;
+  color: white;
+}
 
-    .score {
-      font-size: 24px;
-      margin: 20px 0;
-    }
+.score {
+  font-size: 24px;
+  margin: 20px 0;
+}
 
-    .message {
-      font-weight: bold;
-      min-height: 1.5em;
-    }
+.message {
+  font-weight: bold;
+  min-height: 1.5em;
+}
 
-    .shop-container {
-      margin: 20px 0;
-    }
+.highlight {
+  outline: 4px solid red;
+}
 
-    #shop {
-      display: none;
-      padding: 10px;
-      border: 2px solid #ccc;
-      background: white;
-      max-width: 500px;
-      margin: 0 auto;
-      border-radius: 12px;
-    }
+.prestige-notice {
+  background: #ffd54f;
+  padding: 10px;
+  border-radius: var(--button-radius);
+  font-weight: bold;
+  margin-top: 10px;
+}
 
-    body.dark #shop {
-      background: #2a2a2a;
-      color: white;
-      border-color: #555;
-    }
+/* Декорации и анимации */
+.decoration {
+  position: absolute;
+  font-size: 32px;
+  animation: float 4s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
 
-    .item {
-      margin: 10px;
-    }
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+  100% { transform: translateY(0); }
+}
 
-    .highlight {
-      outline: 4px solid red;
-    }
+.point-float {
+  position: absolute;
+  font-weight: bold;
+  color: orange;
+  animation: floatUp 1s ease forwards;
+  pointer-events: none;
+}
 
-    .decoration {
-      position: absolute;
-      font-size: 32px;
-      animation: float 4s ease-in-out infinite;
-      pointer-events: none;
-      z-index: 0;
-    }
+@keyframes floatUp {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-40px); }
+}
 
-    @keyframes float {
-      0% { transform: translateY(0); }
-      50% { transform: translateY(-20px); }
-      100% { transform: translateY(0); }
-    }
+/* Левое меню локаций */
+#locationMenu {
+  position: fixed;
+  top: 0;
+  left: -250px;
+  width: 250px;
+  height: 100%;
+  background: #673AB7;
+  color: white;
+  padding: 0px;
+  transition: left 0.3s ease;
+  z-index: 1000;
+}
 
-    .point-float {
-      position: absolute;
-      font-weight: bold;
-      color: orange;
-      animation: floatUp 1s ease forwards;
-      pointer-events: none;
-    }
+#locationMenu h2 {
+  text-align: center;
+  margin-top: 10px;
+}
 
-    @keyframes floatUp {
-      0% { opacity: 1; transform: translateY(0); }
-      100% { opacity: 0; transform: translateY(-40px); }
-    }
+#locationMenu button {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  border-radius: 12px;
+  background-color: #9575cd;
+  color: white;
+}
 
-    .progress-wrapper {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 10px;
-      margin: 20px auto;
-      width: fit-content;
-    }
+#locationMenu button:hover {
+  background-color: #b39ddb;
+}
 
-    .prestige-notice {
-      background: #ffd54f;
-      padding: 10px;
-      border-radius: var(--button-radius);
-      font-weight: bold;
-      margin-top: 10px;
-    }
-  </style>
+/* Правое меню магазина */
+#shopMenu {
+  position: fixed;
+  top: 0;
+  right: -300px;
+  width: 300px;
+  height: 100%;
+  background: #2196f3;
+  color: white;
+  padding: 0px;
+  transition: right 0.3s ease;
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+#shopMenu h2 {
+  text-align: center;
+}
+
+#shopMenu button {
+  display: block;
+  width: 100%;
+  margin: 10px 0;
+  border-radius: 12px;
+  background-color: #64b5f6;
+  color: white;
+}
+
+#shopMenu button:hover {
+  background-color: #90caf9;
+}
+
+#shopItems .item {
+  margin: 10px 0;
+  background: rgba(255,255,255,0.1);
+  padding: 5px;
+  border-radius: 8px;
+}
+
+/* Общие эффекты для темной/светлой темы в меню */
+body.dark #locationMenu {
+  background: #4527a0;
+}
+
+body.dark #shopMenu {
+  background: #1976d2;
+}
+
+body.dark button.shop-button {
+  background-color: #64b5f6;
+  color: black;
+}
+
+body.dark button.location-toggle {
+  background-color: #5e35b1;
+}
+</style>
 </head>
 <body>
+<header>
+  <h1>Clicker Game</h1>
+  <p>Кликай, покупай, улучшай!</p>
+  <button class="theme-button" onclick="toggleTheme()">🌙 / ☀️</button>
+</header>
 
-  <header>
-    <h1>Clicker Game</h1>
-    <p>Кликай, покупай, улучшай!</p>
-    <button class="theme-button" onclick="toggleTheme()">🌙 / ☀️</button>
-  </header>
+<!-- Локации слева -->
+<div id="locationMenu">
+  <h2>Локации</h2>
+  <button onclick="goToLocation('main.html')">Главная 🏠</button>
+  <button onclick="goToLocation('forest.html')">Лес 🌳</button>
+  <button onclick="goToLocation('space.html')">Космос 🚀</button>
+  <button onclick="goToLocation('casino.html')">🎰 Казино</button>
+  <button onclick="closeLocationMenu()" style="margin-top:20px;">Закрыть</button>
+</div>
 
-  <main>
-    <div class="score">
-      Очки: <span id="points">0</span><br>
-      Всего: <span id="totalPoints">0</span><br>
-      Престижей: <span id="prestigeCount">0</span>
-    </div>
+<!-- Магазин справа -->
+<div id="shopMenu">
+  <h2>Магазин</h2>
+  <div style="text-align:center;">
+    <button class="tab active" onclick="switchTab('click')">Улучшения клика</button>
+    <button class="tab" onclick="switchTab('auto')">Автокликеры</button>
+  </div>
+  <div id="shopItems"></div>
+  <button onclick="closeShopMenu()" style="margin-top:20px;">Закрыть</button>
+</div>
 
-    <button class="click-button" onclick="addPoint()">Нажми меня</button>
-    <div class="message" id="message"></div>
+<main>
+  <div class="score">
+    Очки: <span id="points">0</span><br>
+    Множитель: <span id="multiplier">x1</span><br>
+    Всего: <span id="totalPoints">0</span><br>
+    Престижей: <span id="prestigeCount">0</span>
+  </div>
 
-    <div class="progress-wrapper">
-      <button class="location-toggle" onclick="openLocationMenu()">🌍 Локации</button>
-      <div id="prestigeNotice" class="prestige-notice" style="display:none;">
-        Доступен престиж!<br>
-        <button onclick="doPrestige()">Сделать престиж</button>
-      </div>
-    </div>
+  <button class="click-button" onclick="addPoint()">Нажми меня</button>
+  <div class="message" id="message"></div>
 
-    <div class="shop-container">
-      <button class="shop-button" onclick="toggleShop()">🛒 Открыть магазин</button>
-      <div id="shop"></div>
-    </div>
+  <div style="text-align:center; margin:20px 0;">
+    <button class="location-toggle" onclick="openLocationMenu()">🌍 Локации</button>
+    <button class="shop-button" onclick="openShopMenu()">🛒 Магазин</button>
+  </div>
 
-    <button class="reset-button" onclick="confirmReset()">🗑️ Сбросить прогресс</button>
-  </main>
+  <div id="prestigeNotice" class="prestige-notice" style="display:none;">
+    Доступен престиж!<br>
+    <button onclick="doPrestige()">Сделать престиж</button>
+  </div>
 
-  <footer>
-    © 2025 | Прогресс сохраняется автоматически
-  </footer>
+  <button class="reset-button" onclick="confirmReset()">🗑️ Сбросить прогресс</button>
+</main>
 
-  <audio id="clickSound" src="https://www.fesliyanstudios.com/play-mp3/387" preload="auto"></audio>
+<footer>
+  © 2025 | Прогресс сохраняется автоматически
+</footer>
 
-  <script>
-    let points = 0;
-    let totalPoints = 0;
-    let clickPower = 1;
-    let prestigeLevel = 0;
-    let autoClickers = 0;
-    let autoClickPower = 1;
-    let autoClickCost = 500;
-    let shopIndex = 0;
-    let decorationsShown = [];
-    let lastTime = Date.now();
+<audio id="clickSound" src="https://www.fesliyanstudios.com/play-mp3/387" preload="auto"></audio>
 
-    const clickMultipliers = [
-      { multiplier: 5, cost: 200 },
-      { multiplier: 8, cost: 550 },
-      { multiplier: 10, cost: 1200 },
-      { multiplier: 12, cost: 2000 },
-      { multiplier: 15, cost: 3000 }
-    ];
+<script>
+let points = 0, totalPoints = 0, clickPower = 1, prestigeLevel = 0;
+let autoClickers = 0, autoClickPower = 1, autoClickCost = 500;
+let clickStreak = 0, lastClickTime = 0;
+let lastTime = Date.now();
+let decorationsShown = [];
+let shopTab = 'click';
 
-    const autoDecor = [
-      { points: 100, emoji: "🎈" },
-      { points: 500, emoji: "🧸" },
-      { points: 1000, emoji: "🌟" },
-      { points: 2500, emoji: "🎁" },
-      { points: 5000, emoji: "🪄" },
-      { points: 10000, emoji: "🏆" }
-    ];
+const clickMultipliers = [
+  { multiplier: 2, cost: 100 },
+  { multiplier: 3, cost: 250 },
+  { multiplier: 4, cost: 500 },
+  { multiplier: 5, cost: 1000 },
+  { multiplier: 6, cost: 2500 }
+];
 
-    function addPoint() {
-      points += clickPower;
-      totalPoints += clickPower;
-      document.getElementById("points").textContent = points;
-      document.getElementById("totalPoints").textContent = totalPoints;
-      document.getElementById("clickSound").play();
-      showPointFloat("+" + clickPower);
-      updatePrestigeNotice();
-      autoDecorate();
-      save();
+const autoUpgrades = [
+  { power: 1, cost: 500 },
+  { power: 2, cost: 800 },
+  { power: 4, cost: 1300 }
+];
+
+function addPoint() {
+  const now = Date.now();
+  if(now - lastClickTime > 1500) clickStreak = 0;
+  lastClickTime = now;
+  clickStreak++;
+
+  let multiplier = 1;
+  if(clickStreak >= 170) multiplier = 4;
+  else if(clickStreak >= 100) multiplier = 3;
+  else if(clickStreak >= 50) multiplier = 2;
+
+  const pointsToAdd = clickPower * multiplier;
+  points += pointsToAdd;
+  totalPoints += pointsToAdd;
+  document.getElementById("points").textContent = points;
+  document.getElementById("totalPoints").textContent = totalPoints;
+  document.getElementById("multiplier").textContent = "x"+multiplier;
+
+  document.getElementById("clickSound").play();
+  showPointFloat("+"+pointsToAdd);
+  updatePrestigeNotice();
+  autoDecorate();
+  save();
+}
+
+setInterval(()=>{
+  if(Date.now()-lastClickTime>1500 && clickStreak>0){
+    clickStreak=0;
+    document.getElementById("multiplier").textContent="x1";
+  }
+},200);
+
+function showPointFloat(text){
+  const float=document.createElement("div");
+  float.className="point-float";
+  float.textContent=text;
+  const btn=document.querySelector(".click-button");
+  const rect=btn.getBoundingClientRect();
+  float.style.left=rect.left+rect.width/2+"px";
+  float.style.top=rect.top+"px";
+  document.body.appendChild(float);
+  setTimeout(()=>float.remove(),1000);
+}
+
+function openLocationMenu(){ document.getElementById("locationMenu").style.left="0"; }
+function closeLocationMenu(){ document.getElementById("locationMenu").style.left="-250px"; }
+function openShopMenu(){ document.getElementById("shopMenu").style.right="0"; updateShop(); }
+function closeShopMenu(){ document.getElementById("shopMenu").style.right="-300px"; }
+function goToLocation(url){ location.href=url; }
+
+function switchTab(tab){
+  shopTab=tab;
+  document.querySelectorAll("#shopMenu button.tab").forEach(b=>b.classList.remove("active"));
+  if(tab==='click') document.querySelector("#shopMenu button.tab:first-child").classList.add("active");
+  else document.querySelector("#shopMenu button.tab:last-child").classList.add("active");
+  updateShop();
+}
+
+function updateShop(){
+  const shopItems=document.getElementById("shopItems");
+  shopItems.innerHTML="";
+  if(shopTab==='click'){
+    clickMultipliers.forEach((u,i)=>{
+      let div=document.createElement("div");
+      div.className="item";
+      div.innerHTML=`Клик x${u.multiplier} — ${u.cost} очков
+      <button onclick="buyClickUpgrade(${i})">Купить</button>`;
+      shopItems.appendChild(div);
+    });
+  }else{
+    autoUpgrades.forEach((u,i)=>{
+      let div=document.createElement("div");
+      div.className="item";
+      div.innerHTML=`Автокликер +${u.power} — ${u.cost} очков
+      <button onclick="buyAutoClicker(${i})">Купить</button>`;
+      shopItems.appendChild(div);
+    });
+  }
+}
+
+function buyClickUpgrade(i) {
+  const upgrade = clickMultipliers[i];
+  if (points >= upgrade.cost) {
+    points -= upgrade.cost;
+    clickPower = upgrade.multiplier + prestigeLevel;
+
+    // Удалить все предыдущие множители
+    clickMultipliers.splice(0, i + 1);
+
+    showMessage(`Клик теперь x${clickPower}!`, "green");
+    save();
+  } else {
+    highlightScreen();
+  }
+
+  updateShop();
+}
+
+function buyAutoClicker(i){
+  let upgrade=autoUpgrades[i];
+  if(points>=upgrade.cost){
+    points-=upgrade.cost;
+    autoClickers+=upgrade.power;
+    showMessage(`Автокликеров: ${autoClickers}`,"blue");
+    save();
+  }else highlightScreen();
+  updateShop();
+}
+
+function autoClickLoop(){
+  let now=Date.now();
+  let elapsed=Math.floor((now-lastTime)/5000);
+  if(elapsed>0 && autoClickers>0){
+    points+=elapsed*autoClickers;
+    totalPoints+=elapsed*autoClickers;
+    lastTime=now;
+    document.getElementById("points").textContent=points;
+    document.getElementById("totalPoints").textContent=totalPoints;
+    updatePrestigeNotice();
+    autoDecorate();
+    save();
+  }
+  setTimeout(autoClickLoop,1000);
+}
+
+function showMessage(msg,color){
+  const el=document.getElementById("message");
+  el.textContent=msg;
+  el.style.color=color;
+  setTimeout(()=>el.textContent="",2000);
+}
+
+function highlightScreen(){
+  document.body.classList.add("highlight");
+  setTimeout(()=>document.body.classList.remove("highlight"),500);
+}
+
+function confirmReset(){
+  if(confirm("Сбросить весь прогресс?")){
+    localStorage.clear();
+    location.reload();
+  }
+}
+
+function updatePrestigeNotice(){
+  const nextPrestige=prestigeLevel===0?10000:25000;
+  const notice=document.getElementById("prestigeNotice");
+  notice.style.display=points>=nextPrestige?"block":"none";
+}
+
+function doPrestige(){
+  prestigeLevel++;
+  clickPower=1+prestigeLevel;
+  points=0; autoClickers=0;
+  document.getElementById("prestigeCount").textContent=prestigeLevel;
+  document.querySelectorAll(".decoration").forEach(e=>e.remove());
+  decorationsShown=[];
+  save();
+  updateShop();
+  updatePrestigeNotice();
+  alert(`Престиж #${prestigeLevel}! Клик теперь +${clickPower}`);
+}
+
+const autoDecor=[
+  { points:100, emoji:"🎈" },
+  { points:500, emoji:"🧸" },
+  { points:1000, emoji:"🌟" },
+  { points:2500, emoji:"🎁" },
+  { points:5000, emoji:"🪄" },
+  { points:10000, emoji:"🏆" }
+];
+
+function autoDecorate(){
+  autoDecor.forEach(obj=>{
+    if(points>=obj.points && !decorationsShown.includes(obj.emoji)){
+      addDecoration(obj.emoji);
+      decorationsShown.push(obj.emoji);
     }
+  });
+}
 
-    function showPointFloat(text) {
-      const float = document.createElement("div");
-      float.className = "point-float";
-      float.textContent = text;
-      const btn = document.querySelector(".click-button");
-      const rect = btn.getBoundingClientRect();
-      float.style.left = rect.left + rect.width / 2 + "px";
-      float.style.top = rect.top + "px";
-      document.body.appendChild(float);
-      setTimeout(() => float.remove(), 1000);
-    }
+function addDecoration(emoji){
+  let el=document.createElement("div");
+  el.className="decoration";
+  el.textContent=emoji;
+  el.style.top=Math.random()*80+"%";
+  el.style.left=Math.random()*80+"%";
+  document.body.appendChild(el);
+}
 
-    function toggleShop() {
-      const shop = document.getElementById("shop");
-      shop.style.display = shop.style.display === "none" ? "block" : "none";
-      updateShop();
-    }
+function toggleTheme(){
+  document.body.classList.toggle("dark");
+  localStorage.setItem("theme", document.body.classList.contains("dark")?"dark":"light");
+}
 
-    function updateShop() {
-      const shop = document.getElementById("shop");
-      shop.innerHTML = "";
+function loadTheme(){
+  const theme=localStorage.getItem("theme");
+  if(theme==="dark") document.body.classList.add("dark");
+  else document.body.classList.remove("dark");
+}
+loadTheme();
 
-      if (shopIndex < clickMultipliers.length) {
-        const upgrade = clickMultipliers[shopIndex];
-        let div = document.createElement("div");
-        div.className = "item";
-        div.innerHTML = `Клик x${upgrade.multiplier} — ${upgrade.cost} очков
-          <button onclick="buyMultiplier(${shopIndex})">Купить</button>`;
-        shop.appendChild(div);
-      }
+function save(){
+  localStorage.setItem("clickerSave",JSON.stringify({
+    points,totalPoints,clickPower,prestigeLevel,autoClickers,clickStreak,lastTime,decorationsShown
+  }));
+}
 
-      let div = document.createElement("div");
-      div.className = "item";
-      div.innerHTML = `Автокликер +${autoClickPower} — ${autoClickCost} очков
-        <button onclick="buyAutoClicker()">Купить</button>`;
-      shop.appendChild(div);
-    }
+function load(){
+  let data=JSON.parse(localStorage.getItem("clickerSave"));
+  if(data){
+    points=data.points??0;
+    totalPoints=data.totalPoints??0;
+    clickPower=data.clickPower??1;
+    prestigeLevel=data.prestigeLevel??0;
+    autoClickers=data.autoClickers??0;
+    clickStreak=data.clickStreak??0;
+    lastTime=data.lastTime??Date.now();
+    decorationsShown=data.decorationsShown??[];
+  }
+  document.getElementById("points").textContent=points;
+  document.getElementById("totalPoints").textContent=totalPoints;
+  document.getElementById("prestigeCount").textContent=prestigeLevel;
+  updateShop();
+  updatePrestigeNotice();
+  autoDecorate();
+}
 
-    function buyMultiplier(index) {
-      const upgrade = clickMultipliers[index];
-      if (points >= upgrade.cost) {
-        points -= upgrade.cost;
-        clickPower = upgrade.multiplier + prestigeLevel;
-        shopIndex++;
-        showMessage(`Клик теперь x${clickPower}!`, "green");
-        updateShop();
-        save();
-      } else {
-        highlightScreen();
-      }
-    }
-
-    function buyAutoClicker() {
-      if (points >= autoClickCost) {
-        points -= autoClickCost;
-        autoClickers += autoClickPower;
-        autoClickPower = autoClickers < 6 ? Math.floor(autoClickPower * 1.5) : Math.floor(autoClickPower * 1.3);
-        autoClickCost += 150;
-        showMessage(`Автокликеров: ${autoClickers}`, "blue");
-        updateShop();
-        save();
-      } else {
-        highlightScreen();
-      }
-    }
-
-    function autoClickLoop() {
-      let now = Date.now();
-      let elapsed = Math.floor((now - lastTime) / 5000);
-      if (elapsed > 0 && autoClickers > 0) {
-        points += elapsed * autoClickers;
-        totalPoints += elapsed * autoClickers;
-        lastTime = now;
-        document.getElementById("points").textContent = points;
-        document.getElementById("totalPoints").textContent = totalPoints;
-        updatePrestigeNotice();
-        autoDecorate();
-        save();
-      }
-      setTimeout(autoClickLoop, 1000);
-    }
-
-    function showMessage(msg, color) {
-      const el = document.getElementById("message");
-      el.textContent = msg;
-      el.style.color = color;
-      setTimeout(() => el.textContent = "", 2000);
-    }
-
-    function highlightScreen() {
-      document.body.classList.add("highlight");
-      setTimeout(() => document.body.classList.remove("highlight"), 500);
-    }
-
-    function confirmReset() {
-      if (confirm("Сбросить весь прогресс?")) {
-        localStorage.clear();
-        location.reload();
-      }
-    }
-
-    function updatePrestigeNotice() {
-      const nextPrestige = prestigeLevel === 0 ? 10000 : 25000;
-      const notice = document.getElementById("prestigeNotice");
-      if (points >= nextPrestige) {
-        notice.style.display = "block";
-      } else {
-        notice.style.display = "none";
-      }
-    }
-
-    function doPrestige() {
-      prestigeLevel++;
-      clickPower = 1 + prestigeLevel;
-      points = 0;
-      autoClickers = 0;
-      autoClickPower = 1;
-      autoClickCost = 500;
-      shopIndex = 0;
-      decorationsShown = [];
-      alert(`Престиж #${prestigeLevel}! Клик теперь +${clickPower}`);
-      document.getElementById("prestigeCount").textContent = prestigeLevel;
-      document.querySelectorAll(".decoration").forEach(e => e.remove());
-      save();
-      updateShop();
-      updatePrestigeNotice();
-    }
-
-    function autoDecorate() {
-      autoDecor.forEach(obj => {
-        if (points >= obj.points && !decorationsShown.includes(obj.emoji)) {
-          addDecoration(obj.emoji);
-          decorationsShown.push(obj.emoji);
-        }
-      });
-    }
-
-    function addDecoration(emoji) {
-      let el = document.createElement("div");
-      el.className = "decoration";
-      el.textContent = emoji;
-      el.style.top = Math.random() * 80 + "%";
-      el.style.left = Math.random() * 80 + "%";
-      document.body.appendChild(el);
-    }
-
-    function toggleTheme() {
-      document.body.classList.toggle("dark");
-    }
-
-    function openLocationMenu() {
-      const loc = prompt("Введите локацию:\n1 — main.html\n2 — forest.html");
-      if (loc === "1") location.href = "main.html";
-      else if (loc === "2") location.href = "forest.html";
-    }
-
-    function save() {
-      localStorage.setItem("clickerSave", JSON.stringify({
-        points, totalPoints, clickPower, prestigeLevel,
-        autoClickers, autoClickPower, autoClickCost,
-        shopIndex, decorationsShown, lastTime: Date.now()
-      }));
-    }
-
-    function load() {
-      let data = JSON.parse(localStorage.getItem("clickerSave"));
-      if (data) {
-        points = data.points ?? 0;
-        totalPoints = data.totalPoints ?? data.points ?? 0;
-        clickPower = data.clickPower ?? 1;
-        prestigeLevel = data.prestigeLevel ?? 0;
-        autoClickers = data.autoClickers ?? 0;
-        autoClickPower = data.autoClickPower ?? 1;
-        autoClickCost = data.autoClickCost ?? 500;
-        shopIndex = data.shopIndex ?? 0;
-        decorationsShown = data.decorationsShown ?? [];
-        lastTime = data.lastTime ?? Date.now();
-      } else {
-        totalPoints = 0;
-      }
-
-      document.getElementById("points").textContent = points;
-      document.getElementById("totalPoints").textContent = totalPoints;
-      document.getElementById("prestigeCount").textContent = prestigeLevel;
-      updateShop();
-      updatePrestigeNotice();
-      autoDecorate();
-    }
-
-    load();
-    autoClickLoop();
-  </script>
+load();
+autoClickLoop();
+</script>
 </body>
 </html>
