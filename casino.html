@@ -127,9 +127,7 @@
 </head>
 <body>
   <h1>🎰 Казино</h1>
-    <div class="progress-wrapper">
-    <button class="location-toggle" onclick="goToMain()">🌍</button>
-    </div>
+  <button class="back-button" onclick="goBack()">⬅ Назад</button>
 
   <div class="score">Очки: <span id="points">0</span></div>
 
@@ -254,8 +252,8 @@
       }, 4200);
     }
 
-        function goToMain() {
-      window.location.href = "index.html"; // вернуться на главную локацию
+    function goBack() {
+      location.href = "index.html"; // замените на вашу основную страницу
     }
 
     drawWheel();
