@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🌲 Лесная Локация</title>
+
+  <!-- Шрифт -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-light: #e8f5e9;
+      --bg-dark: #1b2e1b;
+      --text-light: #000;
+      --text-dark: #fff;
+      --button-radius: 999px;
+      --transition: 0.3s ease;
+    }
+
+    body {
+      font-family: 'Orbitron', sans-serif;
+      margin: 0;
+      padding: 0;
+      text-align: center;
+      background-color: var(--bg-light);
+      color: var(--text-light);
+      transition: var(--transition);
+    }
+
+    body.dark {
+      background-color: var(--bg-dark);
+      color: var(--text-dark);
+    }
+
+    header, footer {
+      background: #2e7d32;
+      color: white;
+      padding: 10px;
+    }
+
+    .score {
+      font-size: 24px;
+      margin: 20px 0;
+    }
+
+    button {
+      padding: 12px 24px;
+      font-size: 18px;
+      margin: 10px;
+      cursor: pointer;
+      border-radius: var(--button-radius);
+      border: none;
+      transition: transform 0.15s ease, background-color var(--transition);
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    .click-button {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    .shop-button {
+      background-color: #388e3c;
+      color: white;
+    }
+
+    .reset-button {
+      background-color: crimson;
+      color: white;
+    }
+
+    .theme-button {
+      background-color: #ffb300;
+      color: white;
+    }
+
+    .location-toggle {
+      background-color: #2e7d32;
+      color: white;
+      font-size: 20px;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      position: absolute;
+      left: 10px;
+      top: 105px;
+      z-index: 5;
+    }
+
+    .shop-container {
+      margin: 20px 0;
+    }
+
+    #shop {
+      display: none;
+      padding: 10px;
+      border: 2px solid #ccc;
+      background: white;
+      max-width: 500px;
+      margin: 0 auto;
+      border-radius: 12px;
+    }
+
+    body.dark #shop {
+      background: #2a2a2a;
+      color: white;
+      border-color: #555;
+    }
+
+    .item {
+      margin: 10px;
+    }
+
+    .progress-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 20px auto;
+      position: relative;
+    }
+
+    .progress-bar {
+      width: 250px;
+      height: 25px;
+      background: #c8e6c9;
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--button-radius);
+      box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #66bb6a, #388e3c);
+      width: 0%;
+      transition: width 0.3s ease;
+      border-radius: var(--button-radius);
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 1;
+    }
+
+    .progress-text {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      left: 0;
+      top: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      z-index: 2;
+      pointer-events: none;
+      color: #000;
+    }
+
+    footer {
+      margin-top: 30px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>🌲 Лес</h1>
+    <p>Тут больше зелени, но правила те же!</p>
+    <button class="theme-button" onclick="toggleTheme()">🌙 / ☀️</button>
+  </header>
+
+  <div class="progress-wrapper">
+    <button class="location-toggle" onclick="goToMain()">🌍</button>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+      <span class="progress-text" id="progressText">0 / 10000</span>
+    </div>
+  </div>
+
+  <main>
+    <div class="score">Очки: <span id="points">0</span></div>
+    <button class="click-button" onclick="addPoint()">Нажми меня</button>
+
+    <div class="shop-container">
+      <button class="shop-button" onclick="toggleShop()">🛒 Открыть магазин</button>
+      <div id="shop"></div>
+    </div>
+
+    <button class="reset-button" onclick="confirmReset()">🗑️ Сбросить прогресс</button>
+  </main>
+
+  <footer>
+    © 2025 | Прогресс сохраняется
+  </footer>
+
+  <script>
+    let points = 0;
+    const maxProgress = 10000;
+
+    function addPoint() {
+      points++;
+      updateUI();
+    }
+
+    function updateUI() {
+      document.getElementById("points").textContent = points;
+      const percent = Math.min(points / maxProgress, 1) * 100;
+      document.getElementById("progressFill").style.width = percent + "%";
+      document.getElementById("progressText").textContent = points + " / " + maxProgress;
+    }
+
+    function toggleShop() {
+      const shop = document.getElementById("shop");
+      shop.style.display = shop.style.display === "none" ? "block" : "none";
+    }
+
+    function confirmReset() {
+      if (confirm("Сбросить прогресс?")) {
+        points = 0;
+        updateUI();
+      }
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle("dark");
+    }
+
+    function goToMain() {
+      window.location.href = "index.html"; // вернуться на главную локацию
+    }
+
+    // Автозагрузка
+    updateUI();
+  </script>
+
+</body>
+</html>
