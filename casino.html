@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Казино 🎰</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(to bottom, #1a1a1a, #333);
+      color: #fff;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 36px;
+    }
+
+    .score {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+
+    .slot-machine, .wheel-container {
+      margin: 30px auto;
+      padding: 20px;
+      background: #222;
+      border-radius: 12px;
+      max-width: 400px;
+    }
+
+    .reels {
+      display: flex;
+      justify-content: center;
+      font-size: 40px;
+      margin: 15px 0;
+    }
+
+    .reels span {
+      margin: 0 10px;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      margin: 10px;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    .spin-button {
+      background-color: #4caf50;
+      color: white;
+    }
+
+    .wheel-button {
+      background-color: #2196f3;
+      color: white;
+    }
+
+    .back-button {
+      background-color: #ff9800;
+      color: white;
+      position: fixed;
+      top: 20px;
+      left: 20px;
+    }
+
+    .result {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    /* Wheel of Fortune */
+    .wheel-wrapper {
+      position: relative;
+      width: 300px;
+      height: 300px;
+      margin: 0 auto;
+    }
+
+    .wheel {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 8px solid #fff;
+      position: relative;
+      transition: transform 4s ease-out;
+    }
+
+    .wheel::before {
+      content: "";
+      position: absolute;
+      top: -16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 15px solid transparent;
+      border-right: 15px solid transparent;
+      border-bottom: 20px solid red;
+      z-index: 10;
+    }
+
+    .wheel .segment {
+      position: absolute;
+      width: 50%;
+      height: 50%;
+      background: #444;
+      transform-origin: 100% 100%;
+      clip-path: polygon(100% 100%, 0% 100%, 100% 0%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>🎰 Казино</h1>
+  <button class="back-button" onclick="goBack()">⬅ Назад</button>
+
+  <div class="score">Очки: <span id="points">0</span></div>
+
+  <!-- Слот-машина -->
+  <div class="slot-machine">
+    <h2>Слот-машина</h2>
+    <div class="reels">
+      <span id="r1">❓</span>
+      <span id="r2">❓</span>
+      <span id="r3">❓</span>
+    </div>
+    <button class="spin-button" onclick="spinSlots()">Крутить (100 очков)</button>
+    <div class="result" id="slotResult"></div>
+  </div>
+
+  <!-- Колесо удачи -->
+  <div class="wheel-container">
+    <h2>Колесо удачи</h2>
+    <div class="wheel-wrapper">
+      <div class="wheel" id="wheel"></div>
+    </div>
+    <button class="wheel-button" onclick="spinWheel()">Крутить колесо (150 очков)</button>
+    <div class="result" id="wheelResult"></div>
+  </div>
+
+  <script>
+    const symbols = ["🍒", "🍋", "🔔", "💎", "🍀"];
+    let points = 0;
+
+    function loadPoints() {
+      const save = JSON.parse(localStorage.getItem("clickerSave"));
+      points = save?.points || 0;
+      updatePointsDisplay();
+    }
+
+    function savePoints() {
+      const save = JSON.parse(localStorage.getItem("clickerSave")) || {};
+      save.points = points;
+      localStorage.setItem("clickerSave", JSON.stringify(save));
+    }
+
+    function updatePointsDisplay() {
+      document.getElementById("points").textContent = points;
+    }
+
+    function spinSlots() {
+      if (points < 100) {
+        alert("Недостаточно очков!");
+        return;
+      }
+      points -= 100;
+
+      const r1 = symbols[Math.floor(Math.random() * symbols.length)];
+      const r2 = symbols[Math.floor(Math.random() * symbols.length)];
+      const r3 = symbols[Math.floor(Math.random() * symbols.length)];
+
+      document.getElementById("r1").textContent = r1;
+      document.getElementById("r2").textContent = r2;
+      document.getElementById("r3").textContent = r3;
+
+      let resultText = "Ничего не выиграно.";
+      if (r1 === r2 && r2 === r3) {
+        const win = 500;
+        points += win;
+        resultText = `🎉 Три ${r1}! Выигрыш: ${win} очков`;
+      } else if (r1 === r2 || r2 === r3 || r1 === r3) {
+        const win = Math.floor(100 * 1.2);
+        points += win;
+        resultText = `✨ Два совпадения! Выигрыш: ${win} очков`;
+      }
+
+      document.getElementById("slotResult").textContent = resultText;
+      updatePointsDisplay();
+      savePoints();
+    }
+
+    // Wheel of Fortune
+    const segments = [100, 200, 300, 0, 500, 50, 250, 0];
+    const wheel = document.getElementById("wheel");
+
+    // Отрисовка сегментов
+    function drawWheel() {
+      const angle = 360 / segments.length;
+      segments.forEach((val, i) => {
+        const seg = document.createElement("div");
+        seg.className = "segment";
+        seg.style.transform = `rotate(${i * angle}deg)`;
+        seg.textContent = val === 0 ? "Пусто" : `+${val}`;
+        seg.style.background = i % 2 === 0 ? "#3f51b5" : "#009688";
+        wheel.appendChild(seg);
+      });
+    }
+
+    let currentRotation = 0;
+
+    function spinWheel() {
+      if (points < 150) {
+        alert("Недостаточно очков!");
+        return;
+      }
+      points -= 150;
+
+      const index = Math.floor(Math.random() * segments.length);
+      const anglePerSegment = 360 / segments.length;
+      const extraSpins = 5 * 360; // полных оборотов
+      const targetRotation = extraSpins + (360 - index * anglePerSegment);
+
+      currentRotation += targetRotation;
+
+      wheel.style.transform = `rotate(${currentRotation}deg)`;
+
+      setTimeout(() => {
+        const won = segments[index];
+        let message = "Ничего не выпало.";
+        if (won > 0) {
+          points += won;
+          message = `Выигрыш: ${won} очков 🎉`;
+        }
+        document.getElementById("wheelResult").textContent = message;
+        updatePointsDisplay();
+        savePoints();
+      }, 4200);
+    }
+
+    function goBack() {
+      location.href = "main.html"; // замените на вашу основную страницу
+    }
+
+    drawWheel();
+    loadPoints();
+  </script>
+</body>
+</html>
