@@ -132,8 +132,6 @@ button:hover {
   width: 250px;
   height: 100%;
   background: #673AB7;
-  color: white;
-  padding: 0px;
   transition: left 0.3s ease;
   z-index: 1000;
 }
@@ -224,10 +222,10 @@ body.dark button.location-toggle {
 <!-- Локации слева -->
 <div id="locationMenu">
   <h2>Локации</h2>
-  <button onclick="goToLocation(index.html')">Главная 🏠</button>
+  <button onclick="goToLocation('index.html')">Главная 🏠</button>
   <button onclick="goToLocation('forest.html')">Лес 🌳</button>
   <button onclick="goToLocation('space.html')">Космос 🚀</button>
-  <button onclick="goToLocation('casino.html')">🎰 Казино</button>
+  <button onclick="goToLocation('tetris.html')">tetris</button>
   <button onclick="closeLocationMenu()" style="margin-top:20px;">Закрыть</button>
 </div>
 
@@ -273,6 +271,37 @@ body.dark button.location-toggle {
 <audio id="clickSound" src="https://www.fesliyanstudios.com/play-mp3/387" preload="auto"></audio>
 
 <script>
+// Обработка свайпа
+let touchStartX = 0;
+let touchEndX = 0;
+
+document.addEventListener('touchstart', function(e) {
+  touchStartX = e.changedTouches[0].screenX;
+}, false);
+
+document.addEventListener('touchend', function(e) {
+  touchEndX = e.changedTouches[0].screenX;
+  handleSwipe();
+}, false);
+
+function handleSwipe() {
+  const deltaX = touchEndX - touchStartX;
+
+  // 👉 свайп вправо = закрыть магазин (справа)
+  if (deltaX > 100) {
+    document.getElementById("shopMenu")?.classList.remove("open");
+  }
+
+  // 👈 свайп влево = закрыть меню локаций (слева)
+  if (deltaX < -100) {
+    const locationMenu = document.getElementById("locationMenu");
+    if (locationMenu) {
+      locationMenu.style.left = "-250px";
+    }
+  }
+}
+
+
 let points = 0, totalPoints = 0, clickPower = 1, prestigeLevel = 0;
 let autoClickers = 0, autoClickPower = 1, autoClickCost = 500;
 let clickStreak = 0, lastClickTime = 0;
