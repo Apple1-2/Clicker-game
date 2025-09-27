@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Тетрис Онлайн</title>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+    import {
+      getFirestore, collection, addDoc, getDocs, query, orderBy, limit, where
+    } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyCpINATrJt3I4cyggFmqdbXSK_TrUR8G2I",
@@ -21,9 +23,8 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
     window.db = db;
-    window.firebaseTools = { collection, addDoc, getDocs, query, orderBy, limit };
+    window.firebaseTools = { collection, addDoc, getDocs, query, orderBy, limit, where };
   </script>
 
   <style>
@@ -31,33 +32,45 @@
       background: #000;
       color: #fff;
       font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      text-align: center;
       margin: 0;
+      padding: 0;
     }
     canvas {
-      border: 2px solid #fff;
+      display: block;
+      margin: 20px auto;
       background: #111;
-      margin-top: 10px;
+      border: 2px solid white;
     }
-    .controls {
-      margin: 10px;
+    #pauseBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: transparent;
+      border: none;
+      font-size: 28px;
+      color: white;
+      cursor: pointer;
     }
-    button {
-      margin: 5px;
+    .controller {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin: 15px 0;
+    }
+    .controller button {
+      font-size: 26px;
       padding: 10px 20px;
-      font-size: 16px;
-      border-radius: 5px;
-      background: #333;
+      background: #222;
       color: white;
       border: none;
+      border-radius: 10px;
     }
     #nicknameModal {
       position: fixed;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      background: rgba(0,0,0,0.9);
+      background: rgba(0,0,0,0.95);
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -65,7 +78,7 @@
       z-index: 10;
     }
     #nicknameModal input {
-      font-size: 20px;
+      font-size: 18px;
       padding: 10px;
       margin-bottom: 10px;
     }
@@ -73,8 +86,10 @@
 </head>
 <body>
 
+<button id="pauseBtn" onclick="pauseGame()">⏸</button>
+
 <div id="nicknameModal">
-  <h2>Введите ник</h2>
+  <h2>Введите ник (уникально)</h2>
   <input type="text" id="nicknameInput" placeholder="Ваш ник">
   <button onclick="startGame()">Играть</button>
 </div>
@@ -85,34 +100,39 @@
 <div id="record">Рекорд: 0</div>
 <div id="playerName"></div>
 
-<div class="controls">
-  <button onclick="move(-1)">⬅</button>
-  <button onclick="drop()">⬇</button>
-  <button onclick="move(1)">➡</button>
+<div class="controller">
+  <button onclick="move(-1)">⬅️</button>
+  <button onclick="drop()">⬇️</button>
+  <button onclick="move(1)">➡️</button>
   <button onclick="rotate()">🔁</button>
-  <button onclick="pauseGame()">⏸ Пауза</button>
 </div>
 
-<h2>🏆 Таблица лидеров</h2>
+<h2>🏆 Лидеры</h2>
 <ol id="leaderboard"></ol>
 
-<script>
-let canvas = document.getElementById("tetris");
-let context = canvas.getContext("2d");
-context.scale(20, 20);
+<!-- Звуки -->
+<audio id="sound-drop" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_7ee409f499.mp3" preload="auto"></audio>
+<audio id="sound-rotate" src="https://cdn.pixabay.com/download/audio/2021/09/21/audio_f9bdc3f3f6.mp3" preload="auto"></audio>
+<audio id="sound-line" src="https://cdn.pixabay.com/download/audio/2022/02/10/audio_cacfe85767.mp3" preload="auto"></audio>
 
-let player = {
-  pos: {x: 0, y: 0},
-  matrix: null,
-  score: 0
-};
+<script>
+const canvas = document.getElementById("tetris");
+const context = canvas.getContext("2d");
+context.scale(20, 20);
 
 let arena = createMatrix(12, 20);
 let dropCounter = 0;
 let dropInterval = 1000;
 let lastTime = 0;
 let paused = false;
-let nickname = localStorage.getItem('nickname') || '';
+let nickname = localStorage.getItem("nickname") || "";
+let player = { pos: {x: 0, y: 0}, matrix: null, score: 0 };
+
+const sounds = {
+  drop: document.getElementById("sound-drop"),
+  rotate: document.getElementById("sound-rotate"),
+  line: document.getElementById("sound-line")
+};
 
 function createMatrix(w, h) {
   const matrix = [];
@@ -128,6 +148,78 @@ function createPiece(type) {
   if (type === 'I') return [[0,5,0,0],[0,5,0,0],[0,5,0,0],[0,5,0,0]];
   if (type === 'S') return [[0,6,6],[6,6,0],[0,0,0]];
   if (type === 'Z') return [[7,7,0],[0,7,7],[0,0,0]];
+}
+
+function collide(arena, player) {
+  const m = player.matrix;
+  const o = player.pos;
+  for (let y = 0; y < m.length; ++y) {
+    for (let x = 0; x < m[y].length; ++x) {
+      if (m[y][x] !== 0 &&
+          (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+function merge(arena, player) {
+  player.matrix.forEach((row, y) => {
+    row.forEach((value, x) => {
+      if (value !== 0) {
+        arena[y + player.pos.y][x + player.pos.x] = value;
+      }
+    });
+  });
+}
+
+function arenaSweep() {
+  let rowCount = 1;
+  outer: for (let y = arena.length - 1; y >= 0; --y) {
+    for (let x = 0; x < arena[y].length; ++x) {
+      if (arena[y][x] === 0) continue outer;
+    }
+    const row = arena.splice(y, 1)[0].fill(0);
+    arena.unshift(row);
+    player.score += rowCount * 10;
+    rowCount *= 2;
+    sounds.line.play();
+  }
+}
+
+function drop() {
+  player.pos.y++;
+  if (collide(arena, player)) {
+    player.pos.y--;
+    merge(arena, player);
+    arenaSweep();
+    resetPlayer();
+    updateScore();
+  }
+  dropCounter = 0;
+  sounds.drop.play();
+}
+
+function move(dir) {
+  player.pos.x += dir;
+  if (collide(arena, player)) player.pos.x -= dir;
+}
+
+function rotate() {
+  const m = player.matrix;
+  for (let y = 0; y < m.length; ++y) {
+    for (let x = 0; x < y; ++x) {
+      [m[x][y], m[y][x]] = [m[y][x], m[x][y]];
+    }
+  }
+  m.forEach(row => row.reverse());
+  if (collide(arena, player)) {
+    m.reverse();
+    m.forEach(row => row.reverse());
+  } else {
+    sounds.rotate.play();
+  }
 }
 
 function drawMatrix(matrix, offset) {
@@ -149,30 +241,6 @@ function draw() {
   drawMatrix(player.matrix, player.pos);
 }
 
-function merge(arena, player) {
-  player.matrix.forEach((row, y) => {
-    row.forEach((value, x) => {
-      if (value !== 0) {
-        arena[y + player.pos.y][x + player.pos.x] = value;
-      }
-    });
-  });
-}
-
-function collide(arena, player) {
-  const m = player.matrix;
-  const o = player.pos;
-  for (let y = 0; y < m.length; ++y) {
-    for (let x = 0; x < m[y].length; ++x) {
-      if (m[y][x] !== 0 &&
-          (arena[y + o.y] && arena[y + o.y][x + o.x]) !== 0) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
 function resetPlayer() {
   const pieces = 'TJLOSZI';
   player.matrix = createPiece(pieces[Math.floor(Math.random() * pieces.length)]);
@@ -180,62 +248,8 @@ function resetPlayer() {
   player.pos.x = (arena[0].length / 2 | 0) - (player.matrix[0].length / 2 | 0);
   if (collide(arena, player)) {
     saveScore();
-    player.score = 0;
     arena.forEach(row => row.fill(0));
-  }
-}
-
-function rotate() {
-  let m = player.matrix;
-  for (let y = 0; y < m.length; ++y) {
-    for (let x = 0; x < y; ++x) {
-      [m[x][y], m[y][x]] = [m[y][x], m[x][y]];
-    }
-  }
-  m.forEach(row => row.reverse());
-  if (collide(arena, player)) {
-    m.reverse();
-    m.forEach(row => row.reverse());
-  }
-}
-
-function drop() {
-  player.pos.y++;
-  if (collide(arena, player)) {
-    player.pos.y--;
-    merge(arena, player);
-    arenaSweep();
-    resetPlayer();
-    updateScore();
-  }
-  dropCounter = 0;
-}
-
-function move(dir) {
-  player.pos.x += dir;
-  if (collide(arena, player)) player.pos.x -= dir;
-}
-
-function update(time = 0) {
-  if (paused) return;
-  const delta = time - lastTime;
-  lastTime = time;
-  dropCounter += delta;
-  if (dropCounter > dropInterval) drop();
-  draw();
-  requestAnimationFrame(update);
-}
-
-function arenaSweep() {
-  let rowCount = 1;
-  outer: for (let y = arena.length - 1; y >= 0; --y) {
-    for (let x = 0; x < arena[y].length; ++x) {
-      if (arena[y][x] === 0) continue outer;
-    }
-    const row = arena.splice(y, 1)[0].fill(0);
-    arena.unshift(row);
-    player.score += rowCount * 10;
-    rowCount *= 2;
+    player.score = 0;
   }
 }
 
@@ -249,13 +263,22 @@ function updateScore() {
   document.getElementById("record").innerText = "Рекорд: " + record;
 }
 
+function update(time = 0) {
+  if (paused) return;
+  const delta = time - lastTime;
+  lastTime = time;
+  dropCounter += delta;
+  if (dropCounter > dropInterval) drop();
+  draw();
+  requestAnimationFrame(update);
+}
+
 function pauseGame() {
   paused = !paused;
   if (!paused) update();
 }
 
 function saveScore() {
-  if (!window.db || !window.firebaseTools) return;
   const { collection, addDoc } = window.firebaseTools;
   addDoc(collection(window.db, "leaderboard"), {
     name: nickname,
@@ -265,7 +288,6 @@ function saveScore() {
 }
 
 function loadLeaderboard() {
-  if (!window.db || !window.firebaseTools) return;
   const { collection, getDocs, query, orderBy, limit } = window.firebaseTools;
   const q = query(collection(window.db, "leaderboard"), orderBy("score", "desc"), limit(10));
   getDocs(q).then(snapshot => {
@@ -279,20 +301,47 @@ function loadLeaderboard() {
   });
 }
 
-function startGame() {
+async function startGame() {
   const input = document.getElementById("nicknameInput");
-  if (input && input.value.trim()) {
-    nickname = input.value.trim();
-    localStorage.setItem('nickname', nickname);
+  if (!nickname && input && input.value.trim()) {
+    const tryNick = input.value.trim();
+
+    const { collection, getDocs, query, where } = window.firebaseTools;
+    const q = query(collection(window.db, "leaderboard"), where("name", "==", tryNick));
+    const snapshot = await getDocs(q);
+
+    if (!snapshot.empty) {
+      alert("Такой ник уже занят.");
+      return;
+    }
+
+    nickname = tryNick;
+    localStorage.setItem("nickname", nickname);
   }
-  if (!nickname) return alert("Введите ник!");
+
+  if (!nickname) return alert("Введите ник");
+
   document.getElementById("nicknameModal").style.display = "none";
   document.getElementById("playerName").innerText = "Игрок: " + nickname;
+
   resetPlayer();
   updateScore();
   loadLeaderboard();
   update();
 }
+
+window.onload = () => {
+  const saved = localStorage.getItem("nickname");
+  if (saved) {
+    nickname = saved;
+    document.getElementById("nicknameModal").style.display = "none";
+    document.getElementById("playerName").innerText = "Игрок: " + nickname;
+    resetPlayer();
+    updateScore();
+    loadLeaderboard();
+    update();
+  }
+};
 
 document.addEventListener("keydown", e => {
   if (paused) return;
@@ -302,6 +351,5 @@ document.addEventListener("keydown", e => {
   else if (e.key === "w") rotate();
 });
 </script>
-
 </body>
 </html>
