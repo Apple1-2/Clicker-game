@@ -16,7 +16,7 @@
       apiKey: "AIzaSyCpINATrJt3I4cyggFmqdbXSK_TrUR8G2I",
       authDomain: "tetrisleaderboard-345be.firebaseapp.com",
       projectId: "tetrisleaderboard-345be",
-      storageBucket: "tetrisleaderboard-345be.firebasestorage.app",
+      storageBucket: "tetrisleaderboard-345be.appspot.com",
       messagingSenderId: "299259146481",
       appId: "1:299259146481:web:512d5f4a65cdba9685b950"
     };
@@ -32,35 +32,35 @@
       background: #000;
       color: #fff;
       font-family: Arial, sans-serif;
-      text-align: center;
       margin: 0;
       padding: 0;
+      text-align: center;
     }
     canvas {
-      display: block;
-      margin: 20px auto;
+      border: 2px solid #fff;
       background: #111;
-      border: 2px solid white;
+      margin: 20px auto;
+      display: block;
     }
     #pauseBtn {
       position: absolute;
       top: 10px;
       right: 10px;
+      font-size: 28px;
       background: transparent;
       border: none;
-      font-size: 28px;
       color: white;
       cursor: pointer;
     }
     .controller {
       display: flex;
       justify-content: center;
-      gap: 15px;
-      margin: 15px 0;
+      gap: 20px;
+      margin: 20px;
     }
     .controller button {
       font-size: 26px;
-      padding: 10px 20px;
+      padding: 12px 20px;
       background: #222;
       color: white;
       border: none;
@@ -86,10 +86,10 @@
 </head>
 <body>
 
-<button id="pauseBtn" onclick="pauseGame()">⏸</button>
+<button id="pauseBtn" onclick="togglePause()">⏸</button>
 
 <div id="nicknameModal">
-  <h2>Введите ник (уникально)</h2>
+  <h2>Введите уникальный ник</h2>
   <input type="text" id="nicknameInput" placeholder="Ваш ник">
   <button onclick="startGame()">Играть</button>
 </div>
@@ -107,7 +107,7 @@
   <button onclick="rotate()">🔁</button>
 </div>
 
-<h2>🏆 Лидеры</h2>
+<h2>🏆 Таблица лидеров</h2>
 <ol id="leaderboard"></ol>
 
 <!-- Звуки -->
@@ -141,13 +141,43 @@ function createMatrix(w, h) {
 }
 
 function createPiece(type) {
-  if (type === 'T') return [[0,0,0],[1,1,1],[0,1,0]];
-  if (type === 'O') return [[2,2],[2,2]];
-  if (type === 'L') return [[0,3,0],[0,3,0],[0,3,3]];
-  if (type === 'J') return [[0,4,0],[0,4,0],[4,4,0]];
-  if (type === 'I') return [[0,5,0,0],[0,5,0,0],[0,5,0,0],[0,5,0,0]];
-  if (type === 'S') return [[0,6,6],[6,6,0],[0,0,0]];
-  if (type === 'Z') return [[7,7,0],[0,7,7],[0,0,0]];
+  const pieces = {
+    T: [[0,0,0],[1,1,1],[0,1,0]],
+    O: [[2,2],[2,2]],
+    L: [[0,3,0],[0,3,0],[0,3,3]],
+    J: [[0,4,0],[0,4,0],[4,4,0]],
+    I: [[0,5,0,0],[0,5,0,0],[0,5,0,0],[0,5,0,0]],
+    S: [[0,6,6],[6,6,0],[0,0,0]],
+    Z: [[7,7,0],[0,7,7],[0,0,0]]
+  };
+  return pieces[type];
+}
+
+function drawMatrix(matrix, offset) {
+  const colors = [null,'#FF0D72','#0DC2FF','#0DFF72','#F538FF','#FF8E0D','#FFE138','#3877FF'];
+  matrix.forEach((row, y) => {
+    row.forEach((val, x) => {
+      if (val !== 0) {
+        context.fillStyle = colors[val];
+        context.fillRect(x + offset.x, y + offset.y, 1, 1);
+      }
+    });
+  });
+}
+
+function draw() {
+  context.fillStyle = "#000";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  drawMatrix(arena, {x:0, y:0});
+  drawMatrix(player.matrix, player.pos);
+}
+
+function merge(arena, player) {
+  player.matrix.forEach((row, y) => {
+    row.forEach((val, x) => {
+      if (val !== 0) arena[y + player.pos.y][x + player.pos.x] = val;
+    });
+  });
 }
 
 function collide(arena, player) {
@@ -164,27 +194,19 @@ function collide(arena, player) {
   return false;
 }
 
-function merge(arena, player) {
-  player.matrix.forEach((row, y) => {
-    row.forEach((value, x) => {
-      if (value !== 0) {
-        arena[y + player.pos.y][x + player.pos.x] = value;
-      }
-    });
-  });
-}
-
-function arenaSweep() {
-  let rowCount = 1;
-  outer: for (let y = arena.length - 1; y >= 0; --y) {
-    for (let x = 0; x < arena[y].length; ++x) {
-      if (arena[y][x] === 0) continue outer;
+function rotate() {
+  const m = player.matrix;
+  for (let y = 0; y < m.length; ++y) {
+    for (let x = 0; x < y; ++x) {
+      [m[x][y], m[y][x]] = [m[y][x], m[x][y]];
     }
-    const row = arena.splice(y, 1)[0].fill(0);
-    arena.unshift(row);
-    player.score += rowCount * 10;
-    rowCount *= 2;
-    sounds.line.play();
+  }
+  m.forEach(row => row.reverse());
+  if (collide(arena, player)) {
+    m.reverse();
+    m.forEach(row => row.reverse());
+  } else {
+    sounds.rotate.play();
   }
 }
 
@@ -206,41 +228,6 @@ function move(dir) {
   if (collide(arena, player)) player.pos.x -= dir;
 }
 
-function rotate() {
-  const m = player.matrix;
-  for (let y = 0; y < m.length; ++y) {
-    for (let x = 0; x < y; ++x) {
-      [m[x][y], m[y][x]] = [m[y][x], m[x][y]];
-    }
-  }
-  m.forEach(row => row.reverse());
-  if (collide(arena, player)) {
-    m.reverse();
-    m.forEach(row => row.reverse());
-  } else {
-    sounds.rotate.play();
-  }
-}
-
-function drawMatrix(matrix, offset) {
-  const colors = [null,'#FF0D72','#0DC2FF','#0DFF72','#F538FF','#FF8E0D','#FFE138','#3877FF'];
-  matrix.forEach((row, y) => {
-    row.forEach((value, x) => {
-      if (value !== 0) {
-        context.fillStyle = colors[value];
-        context.fillRect(x + offset.x, y + offset.y, 1, 1);
-      }
-    });
-  });
-}
-
-function draw() {
-  context.fillStyle = "#000";
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  drawMatrix(arena, {x:0, y:0});
-  drawMatrix(player.matrix, player.pos);
-}
-
 function resetPlayer() {
   const pieces = 'TJLOSZI';
   player.matrix = createPiece(pieces[Math.floor(Math.random() * pieces.length)]);
@@ -253,14 +240,16 @@ function resetPlayer() {
   }
 }
 
-function updateScore() {
-  document.getElementById("score").innerText = "Счёт: " + player.score;
-  let record = localStorage.getItem("record") || 0;
-  if (player.score > record) {
-    record = player.score;
-    localStorage.setItem("record", record);
+function arenaSweep() {
+  outer: for (let y = arena.length - 1; y >= 0; --y) {
+    for (let x = 0; x < arena[y].length; ++x) {
+      if (arena[y][x] === 0) continue outer;
+    }
+    arena.splice(y, 1);
+    arena.unshift(new Array(arena[0].length).fill(0));
+    player.score += 10;
+    sounds.line.play();
   }
-  document.getElementById("record").innerText = "Рекорд: " + record;
 }
 
 function update(time = 0) {
@@ -273,9 +262,19 @@ function update(time = 0) {
   requestAnimationFrame(update);
 }
 
-function pauseGame() {
+function togglePause() {
   paused = !paused;
   if (!paused) update();
+}
+
+function updateScore() {
+  document.getElementById("score").innerText = "Счёт: " + player.score;
+  let record = localStorage.getItem("record") || 0;
+  if (player.score > record) {
+    record = player.score;
+    localStorage.setItem("record", record);
+  }
+  document.getElementById("record").innerText = "Рекорд: " + record;
 }
 
 function saveScore() {
@@ -331,9 +330,7 @@ async function startGame() {
 }
 
 window.onload = () => {
-  const saved = localStorage.getItem("nickname");
-  if (saved) {
-    nickname = saved;
+  if (nickname) {
     document.getElementById("nicknameModal").style.display = "none";
     document.getElementById("playerName").innerText = "Игрок: " + nickname;
     resetPlayer();
