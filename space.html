@@ -22,7 +22,7 @@ button:hover { background:#777; }
 #map.active { display:grid; }
 .attack-effect { position:absolute; font-size:28px; animation:flash 0.3s ease forwards; }
 @keyframes flash { 0% { transform:scale(1); opacity:1; } 50% { transform:scale(1.5); opacity:0.8; } 100% { transform:scale(1); opacity:0; } }
-#upgradeMenu, #rewardMenu { position:fixed; top:0; right:-250px; width:250px; height:100%; background:#222; padding:0px; transition:right 0.3s ease; z-index:10; }
+#upgradeMenu, #rewardMenu { position:fixed; top:0; right:-250px; width:250px; height:100%; background:#222; padding:20px; transition:right 0.3s ease; z-index:10; }
 #upgradeMenu.active, #rewardMenu.active { right:0; }
 #upgradeMenu h2, #rewardMenu h2 { margin-top:0; }
 </style>
@@ -36,6 +36,7 @@ button:hover { background:#777; }
     ❤️ ХП: <span id="charHp"></span> / <span id="charHpMax"></span><br>
     ⚡ Выносливость: <span id="stamina"></span> / <span id="staminaMax"></span><br>
     💰 Монеты: <span id="coins">0</span><br>
+    💎 Кристаллы: <span id="coinsBoss">0</span><br>
     🎒 Инвентарь: <span id="inventory">Пусто</span>
   </div>
   <button onclick="toggleUpgradeMenu()">🛠 Прокачка</button>
@@ -93,8 +94,13 @@ let battleEnemyHp=30;
 let battleEnemyMax=30;
 let battleStamina=35;
 let battleInProgress=false;
+let currentEnemy = null;
+let coinsBoss = 0; // специальная валюта за победу над боссом
 
 // Карта
+// Дополнительные константы
+let roundCount = 0;  // счётчик раундов карт
+
 function generateMap() {
   map = [];
   const enemyElements = ["pyro", "hydro", "cryo"];
@@ -103,14 +109,31 @@ function generateMap() {
     hydro: "💧",
     cryo: "❄️"
   };
+  const chestProbability = 0.15;
+  const enemyProbability = 0.15;
+
+  // Увеличиваем номер раунда
+  roundCount++;
+
+  // Решаем: будет ли в этой карте босс?
+  const isBossRound = (roundCount % 5 === 0);
 
   for (let y = 0; y < mapSize; y++) {
     let row = [];
     for (let x = 0; x < mapSize; x++) {
       let rand = Math.random();
 
-      if (rand < 0.15) {
-        // Генерация врага с элементом
+      // Если раунд, где должен быть босс, и на случайной клетке
+      if (isBossRound && rand < 0.02) {
+        // генерация босса
+        row.push({
+          type: "boss",
+          icon: "👑",
+          hp: 100,
+          element: enemyElements[Math.floor(Math.random() * enemyElements.length)]
+        });
+      } else if (rand < enemyProbability) {
+        // обычный враг
         const element = enemyElements[Math.floor(Math.random() * enemyElements.length)];
         row.push({
           type: "enemy",
@@ -118,19 +141,19 @@ function generateMap() {
           element: element,
           hp: 30
         });
-      } else if (rand < 0.30) {
-        // Сундук
+      } else if (rand < enemyProbability + chestProbability) {
+        // сундук
         row.push({ type: "chest", icon: "💰" });
       } else {
-        // Пустая клетка
+        // пустая клетка
         row.push("empty");
       }
     }
     map.push(row);
   }
 
-  // Стартовая позиция игрока
-  playerPos = { x: 2, y: 2 };
+  // Ставим игрока в центр
+  playerPos = { x: Math.floor(mapSize/2), y: Math.floor(mapSize/2) };
 }
 
 function renderMap() {
@@ -167,10 +190,23 @@ function renderMap() {
   checkMapClear();
 }
 
-function checkMapClear(){
-  const allEmpty=map.flat().every(c=>typeof c==="string" && c==="empty");
-  if(allEmpty){
-    log("🗺 Карта очищена! Выберите награду.");
+function checkMapClear() {
+  // ищем, есть ли враги или боссы в карте
+  let anyEnemy = false;
+  for (let y = 0; y < mapSize; y++) {
+    for (let x = 0; x < mapSize; x++) {
+      const cell = map[y][x];
+      if (typeof cell !== "string" && (cell.type === "enemy" || cell.type === "boss")) {
+        anyEnemy = true;
+        break;
+      }
+    }
+    if (anyEnemy) break;
+  }
+
+  if (!anyEnemy) {
+    // все враги и боссы убиты
+    log("🎉 Все враги убиты! Выберите награду.");
     document.getElementById("rewardMenu").classList.add("active");
   }
 }
@@ -202,15 +238,31 @@ else log("🚶 Перемещение...");
 playerPos={x:newX,y:newY}; renderMap(); updateStats();  
 }  
 
-// Боевая система  
-function startBattle(enemy){  
-document.getElementById("map").classList.remove("active");  
-document.getElementById("battle").classList.add("active");  
-battleEnemyMax=enemy.hp; battleEnemyHp=enemy.hp;  
-battleStamina=characters[currentChar].maxStamina;  
-updateBattleStats(); log("⚔ Битва началась!"); battleInProgress=true;  
-setTimeout(enemyTurn,500);  
-}  
+
+function startBattle(enemy) {
+  // Показываем UI битвы
+  document.getElementById("map").classList.remove("active");
+  document.getElementById("battle").classList.add("active");
+
+  // Сохраняем врага
+  currentEnemy = enemy;
+
+  // Инициализируем HP и выносливость
+  battleEnemyHp = enemy.hp;
+  battleEnemyMax = enemy.hp;
+  battleStamina = characters[currentChar].maxStamina;
+
+  // Отображение значений
+  document.getElementById("enemyHp").textContent = battleEnemyHp;
+  document.getElementById("playerHp").textContent = characters[currentChar].hp;
+  document.getElementById("battleStamina").textContent = battleStamina;
+
+  log("⚔ Битва началась!");
+  battleInProgress = true;
+
+  // Ход врага первым (поочерёдно)
+  setTimeout(enemyTurn, 500);
+}
 
 function enemyTurn(){  
 if(!battleInProgress) return;  
@@ -241,13 +293,36 @@ eff.style.left=(Math.random()*200+50)+"px"; eff.style.top=(Math.random()*200+50)
 document.getElementById("game").appendChild(eff); setTimeout(()=>{eff.remove();},300);  
 }  
 
-function endBattle(victory){  
-battleInProgress=false;  
-document.getElementById("battle").classList.remove("active");  
-document.getElementById("map").classList.add("active");  
-if(!victory){ log("💀 Вы проиграли! ХП восстановлено."); characters[currentChar].hp=characters[currentChar].hpMax; }  
-renderMap(); updateStats();  
-}  
+function endBattle(victory) {
+  battleInProgress = false;
+
+  // Скрыть интерфейс битвы
+  document.getElementById("battle").classList.remove("active");
+  document.getElementById("map").classList.add("active");
+
+  const c = characters[currentChar];
+
+  if (victory) {
+    // Победа над боссом
+    if (currentEnemy && currentEnemy.type === "boss") {
+      coinsBoss += 1;
+      log("🏆 Босс побеждён! Получено 1 кристалл 💎");
+    } else {
+      coins += 10;
+      log("🎉 Победа! Получено 10💰");
+    }
+  } else {
+    // Поражение
+    log("💀 Вы проиграли! ХП восстановлено.");
+    c.hp = c.hpMax || 100;
+  }
+
+  // Очистка
+  currentEnemy = null;
+
+  renderMap();
+  updateStats();
+}
 
 function updateBattleStats(){  
 const c=characters[currentChar];  
@@ -272,7 +347,8 @@ document.getElementById("staminaMax").textContent=c.maxStamina;
 document.getElementById("coins").textContent=coins;  
 document.getElementById("menuCoins").textContent=coins;  
 document.getElementById("inventory").textContent=inventory.length?inventory.join(", "):"Пусто";  
-if(battleInProgress) updateBattleStats();  
+if(battleInProgress) updateBattleStats(); 
+document.getElementById("coinsBoss").textContent = coinsBoss;
 }  
 
 // Прокачка  
@@ -294,6 +370,54 @@ function log(msg){ document.getElementById("log").textContent=msg; }
 
 // Инициализация  
 generateMap(); renderMap(); updateStats();  
+</script>
+// Инициализация  
+generateMap(); renderMap(); updateStats();  
+</script>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyDulUU32k5zMevTbN0evGXa2wq4N64nrl8",
+    authDomain: "mini-genshin.firebaseapp.com",
+    projectId: "mini-genshin",
+    storageBucket: "mini-genshin.appspot.com",
+    messagingSenderId: "247588535545",
+    appId: "1:247588535545:web:2feb140a4f3719f26b3628"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  async function saveResult(name, score) {
+    try {
+      await addDoc(collection(db, "results"), {
+        name: name,
+        score: score,
+        timestamp: new Date()
+      });
+      console.log("✔ Результат сохранён!");
+    } catch (e) {
+      console.error("❌ Ошибка при сохранении:", e);
+    }
+  }
+
+  async function getTopResults() {
+    try {
+      const querySnapshot = await getDocs(collection(db, "results"));
+      querySnapshot.forEach((doc) => {
+        console.log(doc.data().name, doc.data().score);
+      });
+    } catch (e) {
+      console.error("Ошибка при загрузке:", e);
+    }
+  }
+
+  window.saveResult = saveResult;
+  window.getTopResults = getTopResults;
 </script>
 </body>
 </html>
