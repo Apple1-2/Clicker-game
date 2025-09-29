@@ -5,61 +5,55 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mini Genshin RPG</title>
 <style>
-body { background: #1e1e2f; color: #fff; font-family: sans-serif; margin: 0; text-align: center; }
-h1 { margin-top: 10px; }
-#game { max-width: 600px; margin: auto; padding: 10px; position: relative; }
-#map { display: grid; grid-template-columns: repeat(5, 1fr); grid-auto-rows: 60px; gap: 4px; max-width: 320px; margin: 20px auto; }
-.cell { width: 100%; height: 60px; background: #333; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 24px; transition: all 0.2s ease; }
-.enemy { background: #cc2222; }
-.chest { background: #996600; }
-.player { outline: 3px solid cyan; }
-button { margin: 5px; padding: 10px 20px; border: none; border-radius: 6px; background: #555; color: white; cursor: pointer; font-size: 16px; }
-button:hover { background: #777; }
-.control-btn { width: 50px; height: 50px; font-size: 24px; background: #444; border-radius: 8px; }
-#controls { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
-#battle { display: none; }
-#battle.active { display: block; }
-#map.active { display: grid; }
-.attack-effect { position: absolute; font-size: 28px; animation: flash 0.3s ease forwards; }
-@keyframes flash { 0% { transform: scale(1); opacity:1; } 50% { transform: scale(1.5); opacity:0.8; } 100% { transform: scale(1); opacity:0; } }
-#upgradeMenu, #rewardMenu { position: fixed; top: 0; right: -250px; width: 250px; height: 100%; background: #222; padding: 0px; transition: right 0.3s ease; z-index: 10; }
-#upgradeMenu.active, #rewardMenu.active { right: 0; }
-#upgradeMenu h2, #rewardMenu h2 { margin-top: 0; }
-#game { position: relative; }
+body { background: #1e1e2f; color: #fff; font-family: sans-serif; margin:0; text-align:center; }
+h1 { margin-top:10px; }
+#game { max-width:600px; margin:auto; padding:10px; position:relative; }
+#map { display:grid; grid-template-columns: repeat(5, 1fr); grid-auto-rows:60px; gap:4px; max-width:320px; margin:20px auto; }
+.cell { width:100%; height:60px; background:#333; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:24px; transition:all 0.2s ease; }
+.enemy { background:#cc2222; }
+.chest { background:#996600; }
+.player { outline:3px solid cyan; }
+button { margin:5px; padding:10px 20px; border:none; border-radius:6px; background:#555; color:white; cursor:pointer; font-size:16px; }
+button:hover { background:#777; }
+.control-btn { width:50px; height:50px; font-size:24px; background:#444; border-radius:8px; }
+#controls { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; margin-top:15px; }
+#battle { display:none; }
+#battle.active { display:block; }
+#map.active { display:grid; }
+.attack-effect { position:absolute; font-size:28px; animation:flash 0.3s ease forwards; }
+@keyframes flash { 0% { transform:scale(1); opacity:1; } 50% { transform:scale(1.5); opacity:0.8; } 100% { transform:scale(1); opacity:0; } }
+#upgradeMenu, #rewardMenu { position:fixed; top:0; right:-250px; width:250px; height:100%; background:#222; padding:20px; transition:right 0.3s ease; z-index:10; }
+#upgradeMenu.active, #rewardMenu.active { right:0; }
+#upgradeMenu h2, #rewardMenu h2 { margin-top:0; }
 </style>
 </head>
 <body>
-
 <h1>Mini Genshin RPG</h1>
 <div id="game">
   <div id="stats">
-    🎮 <span id="charName">Люмин (Анемо)</span><br>
-    🧪 Уровень: <span id="level">1</span> | 💥 Опыт: <span id="xp">0</span><br>
-    ❤️ ХП: <span id="charHp">100</span> / 100<br>
-    ⚡ Выносливость: <span id="stamina">35</span> / 35<br>
+    🎮 <span id="charName"></span><br>
+    🧪 Уровень: <span id="level"></span> | 💥 Опыт: <span id="xp"></span><br>
+    ❤️ ХП: <span id="charHp"></span> / <span id="charHpMax"></span><br>
+    ⚡ Выносливость: <span id="stamina"></span> / <span id="staminaMax"></span><br>
     💰 Монеты: <span id="coins">0</span><br>
     🎒 Инвентарь: <span id="inventory">Пусто</span>
   </div>
-
   <button onclick="toggleUpgradeMenu()">🛠 Прокачка</button>
-
   <div id="map" class="active"></div>
-
   <div id="controls">
     <button class="control-btn" onclick="move(0,-1)">⬆</button>
     <button class="control-btn" onclick="move(-1,0)">⬅</button>
     <button class="control-btn" onclick="move(1,0)">➡</button>
     <button class="control-btn" onclick="move(0,1)">⬇</button>
   </div>
-
   <button onclick="switchCharacter()">🔁 Сменить персонажа</button>
   <div id="log">Используй стрелки или кнопки для перемещения.</div>
 
   <div id="battle">
     <h2>⚔ Битва!</h2>
-    <p>👤 Ваш ХП: <span id="playerHp">100</span> / 100</p>
-    <p>👾 Враг ХП: <span id="enemyHp">30</span> / 30</p>
-    <p>⚡ Выносливость: <span id="battleStamina">35</span> / 35</p>
+    <p>👤 Ваш ХП: <span id="playerHp"></span> / <span id="playerHpMax"></span></p>
+    <p>👾 Враг ХП: <span id="enemyHp"></span> / <span id="enemyHpMax"></span></p>
+    <p>⚡ Выносливость: <span id="battleStamina"></span> / <span id="battleStaminaMax"></span></p>
     <button onclick="playerTurn('attack')">🗡 Атака (8⚡)</button>
     <button onclick="playerTurn('skill')">💥 Навык (15⚡)</button>
   </div>
@@ -84,242 +78,222 @@ button:hover { background: #777; }
 
 <script>
 const characters = [
-  { name: "Люмин (Анемо)", element: "anemo", level: 1, xp: 0, hp: 100, hpMax:100, emoji: "🌪️", maxStamina:35, damage:10 },
-  { name: "Дилюк (Пиро)", element: "pyro", level: 1, xp: 0, hp: 100, hpMax:100, emoji: "🔥", maxStamina:35, damage:12 },
-  { name: "Барбара (Гидро)", element: "hydro", level: 1, xp: 0, hp: 100, hpMax:100, emoji: "💧", maxStamina:35, damage:8 }
+  { name: "Люмин (Анемо)", element: "anemo", level: 1, xp: 0, hp: 100, hpMax: 100, maxStamina: 35, damage: 10, img: "https://png.klev.club/uploads/posts/2024-04/png-klev-club-71pi-p-genshin-lyumin-png-4.png" },
+  { name: "Дилюк (Пиро)", element: "pyro", level: 1, xp: 0, hp: 100, hpMax: 100, maxStamina: 35, damage: 12, img: "https://png.klev.club/uploads/posts/2024-04/png-klev-club-un9j-p-dilyuk-png-17.png" },
+  { name: "Барбара (Гидро)", element: "hydro", level: 1, xp: 0, hp: 100, hpMax: 100, maxStamina: 35, damage: 8, img: "https://grizly.club/uploads/posts/2022-12/1671040721_grizly-club-p-barbara-genshin-png-3.png" }
 ];
 let currentChar = 0;
 let inventory = [];
 let coins = 0;
-const mapSize = 5;
-let map = [];
-let playerPos = { x:2, y:2 };
-const enemyIcons = ["👹","🗡","🟢"];
-let battleEnemyHp = 30;
-let battleEnemyMax = 30;
-let battleStamina = 35;
-let battleInProgress = false;
+const mapSize=5;
+let map=[];
+let playerPos={x:2,y:2};
+const enemyIcons=["👹","🗡","🟢"];
+let battleEnemyHp=30;
+let battleEnemyMax=30;
+let battleStamina=35;
+let battleInProgress=false;
 
-// === Карта ===
-function generateMap(){
-  map=[];
-  for(let y=0;y<mapSize;y++){
-    let row=[];
-    for(let x=0;x<mapSize;x++){
-      let rand=Math.random();
-      if(rand<0.15) row.push({type:"enemy", icon:enemyIcons[Math.floor(Math.random()*enemyIcons.length)], hp:30});
-      else if(rand<0.15) row.push({type:"chest",icon:"💰"});
-      else row.push("empty");
+// Карта
+function generateMap() {
+  map = [];
+  const enemyElements = ["pyro", "hydro", "cryo"];
+  const enemyIcons = {
+    pyro: "🔥",
+    hydro: "💧",
+    cryo: "❄️"
+  };
+
+  for (let y = 0; y < mapSize; y++) {
+    let row = [];
+    for (let x = 0; x < mapSize; x++) {
+      let rand = Math.random();
+
+      if (rand < 0.15) {
+        // Генерация врага с элементом
+        const element = enemyElements[Math.floor(Math.random() * enemyElements.length)];
+        row.push({
+          type: "enemy",
+          icon: enemyIcons[element],
+          element: element,
+          hp: 30
+        });
+      } else if (rand < 0.30) {
+        // Сундук
+        row.push({ type: "chest", icon: "💰" });
+      } else {
+        // Пустая клетка
+        row.push("empty");
+      }
     }
     map.push(row);
   }
-  playerPos={x:2,y:2};
+
+  // Стартовая позиция игрока
+  playerPos = { x: 2, y: 2 };
 }
 
-function renderMap(){
-  const cells=document.getElementById("map");
-  cells.innerHTML="";
-  for(let y=0;y<mapSize;y++){
-    for(let x=0;x<mapSize;x++){
-      const div=document.createElement("div");
-      const cell=map[y][x];
-      const isPlayer=(x===playerPos.x && y===playerPos.y);
-      const type=typeof cell==="string"?cell:cell.type;
+function renderMap() {
+  const cells = document.getElementById("map");
+  cells.innerHTML = "";
+
+  for (let y = 0; y < mapSize; y++) {
+    for (let x = 0; x < mapSize; x++) {
+      const div = document.createElement("div");
+      const cell = map[y][x];
+      const isPlayer = (x === playerPos.x && y === playerPos.y);
+      const type = typeof cell === "string" ? cell : cell.type;
       div.classList.add("cell");
-      if(type!=="empty") div.classList.add(type);
-      if(isPlayer){
+      if (type !== "empty") div.classList.add(type);
+
+      if (isPlayer) {
         div.classList.add("player");
-        div.textContent=characters[currentChar].emoji;
-      } else if(type==="enemy"||type==="chest") div.textContent=cell.icon;
+        // Вставка картинки персонажа
+        const imgEl = document.createElement("img");
+        imgEl.src = characters[currentChar].img;
+        imgEl.style.width = "80%";
+        imgEl.style.height = "80%";
+        imgEl.style.objectFit = "contain";
+        div.appendChild(imgEl);
+      } else if (type === "enemy" || type === "chest") {
+        // В будущем сюда можно вставлять картинки врагов или сундуков
+        div.textContent = cell.icon;
+      }
+
       cells.appendChild(div);
     }
   }
+
   checkMapClear();
 }
 
 function checkMapClear(){
-  const allEmpty = map.flat().every(c => typeof c==="string" && c==="empty");
+  const allEmpty=map.flat().every(c=>typeof c==="string" && c==="empty");
   if(allEmpty){
     log("🗺 Карта очищена! Выберите награду.");
     document.getElementById("rewardMenu").classList.add("active");
   }
 }
 
-// === Выбор награды ===
+// Выбор награды
 function chooseReward(type){
-  const c = characters[currentChar];
-  if(type==="stamina") c.maxStamina +=5;
-  if(type==="damage") c.damage +=2;
-  if(type==="hp") { c.hp +=20; c.hpMax +=20; }
-  document.getElementById("rewardMenu").classList.remove("active");
-  log("🎉 Награда получена!");
-  generateMap();
-  renderMap();
-  updateStats();
-}
-
-// === Перемещение игрока ===
-function move(dx,dy){
-  if(battleInProgress) { log("⚔ Сначала закончите бой!"); return; }
-  const newX=playerPos.x+dx;
-  const newY=playerPos.y+dy;
-  if(newX<0||newY<0||newX>=mapSize||newY>=mapSize) return;
-  const target=map[newY][newX];
-  const type=typeof target==="string"?target:target.type;
-
-  if(type==="enemy"){
-    startBattle({...target});
-    map[newY][newX]="empty";
-  } else if(type==="chest"){
-    const item="Артефакт Lv."+characters[currentChar].level;
-    inventory.push(item);
-    coins += 5; 
-    log(`📦 Найден сундук! Получен предмет: ${item} и 5💰`);
-    map[newY][newX]="empty";
-  } else log("🚶 Перемещение...");
-
-  playerPos={x:newX,y:newY};
-  renderMap();
-  updateStats();
-}
-
-// === Боевая система ===
-function startBattle(enemy){
-  document.getElementById("map").classList.remove("active");
-  document.getElementById("battle").classList.add("active");
-  battleEnemyMax = enemy.hp;
-  battleEnemyHp = enemy.hp;
-  battleStamina = characters[currentChar].maxStamina;
-  updateBattleStats();
-  log("⚔ Битва началась!");
-  battleInProgress = true;
-  setTimeout(enemyTurn, 500);
-}
-
-function enemyTurn(){
-  if(!battleInProgress) return;
-  const dmg = Math.floor(Math.random()*10)+5;
-  characters[currentChar].hp -= dmg;
-  if(characters[currentChar].hp<0) characters[currentChar].hp=0;
-  attackEffect("👾", dmg);
-  updateBattleStats();
-  log(`👾 Враг наносит ${dmg} урона!`);
-
-  if(characters[currentChar].hp <=0){
-    endBattle(false);
-  } else {
-    log("🗡 Ваш ход!");
-  }
-}
-
-function playerTurn(type){
-  if(!battleInProgress) return;
-  const cost = type==="attack"?8:15;
-  if(battleStamina < cost){
-    log("⚡ Недостаточно выносливости!");
-    return;
-  }
-  battleStamina -= cost;
-
-  const dmg = type==="attack"?characters[currentChar].damage:characters[currentChar].damage*2;
-  battleEnemyHp -= dmg;
-  if(battleEnemyHp<0) battleEnemyHp=0;
-  attackEffect(type==="attack"?"🗡":"💥", dmg);
-  log(`${type==="attack"?"🗡 Атака!":"💥 Навык!"} Нанесено ${dmg} урона!`);
-  updateBattleStats();
-
-  if(battleEnemyHp <=0){
-    coins += 10;
-    log("🎉 Победа! Получено 10💰");
-    endBattle(true);
-  } else {
-    setTimeout(enemyTurn, 800);
-  }
-}
-
-function attackEffect(symbol,dmg){
-  const eff=document.createElement("div");
-  eff.className="attack-effect";
-  eff.style.left=(Math.random()*200+50)+"px";
-  eff.style.top=(Math.random()*200+50)+"px";
-  eff.textContent=symbol+"-"+dmg;
-  document.getElementById("game").appendChild(eff);
-  setTimeout(()=>{eff.remove();},300);
-}
-
-function endBattle(victory){
-  battleInProgress = false;
-  document.getElementById("battle").classList.remove("active");
-  document.getElementById("map").classList.add("active");
-  if(!victory){
-    log("💀 Вы проиграли! ХП восстановлено.");
-    const c = characters[currentChar];
-    c.hp = c.hpMax;
-  }
-  renderMap();
-  updateStats();
-}
-
-function updateStats(){
   const c=characters[currentChar];
-  document.getElementById("charName").textContent=c.name;
-  document.getElementById("level").text
-  Content=c.level;
-  document.getElementById("xp").textContent=c.xp;
-  document.getElementById("charHp").textContent=c.hp;
-  document.getElementById("stamina").textContent=c.maxStamina;
-  document.getElementById("coins").textContent=coins;
-  document.getElementById("menuCoins").textContent=coins;
-  document.getElementById("inventory").textContent=inventory.length?inventory.join(", "):"Пусто";
-  if(document.getElementById("battle").classList.contains("active")){
-    document.getElementById("enemyHp").textContent = battleEnemyHp;
-    document.getElementById("playerHp").textContent = c.hp;
-    document.getElementById("battleStamina").textContent = battleStamina;
-  }
-}
+  if(type==="stamina") c.maxStamina+=5;
+  if(type==="damage") c.damage+=2;
+  if(type==="hp"){ c.hpMax+=20; c.hp +=20; if(c.hp>c.hpMax) c.hp=c.hpMax; }  
+document.getElementById("rewardMenu").classList.remove("active");  
+log("🎉 Награда получена!");  
+generateMap(); renderMap(); updateStats();  
+}  
 
-function updateBattleStats(){
-  document.getElementById("enemyHp").textContent = battleEnemyHp;
-  document.getElementById("playerHp").textContent = characters[currentChar].hp;
-  document.getElementById("battleStamina").textContent = battleStamina;
-}
+// Перемещение игрока  
+function move(dx,dy){  
+if(battleInProgress) return;  
+const newX=playerPos.x+dx;  
+const newY=playerPos.y+dy;  
+if(newX<0||newY<0||newX>=mapSize||newY>=mapSize) return;  
+const target=map[newY][newX];  
+const type=typeof target==="string"?target:target.type;  
 
-// === Прокачка персонажа ===
-function toggleUpgradeMenu(){
-  document.getElementById("upgradeMenu").classList.toggle("active");
-}
+if(type==="enemy"){ startBattle(target); map[newY][newX]="empty"; }  
+else if(type==="chest"){ const item="Артефакт Lv."+characters[currentChar].level; inventory.push(item); coins+=5; log(`📦 Найден сундук! ${item} и 5💰`); map[newY][newX]="empty"; }  
+else log("🚶 Перемещение...");  
 
-function upgrade(type){
-  if(coins<10){
-    log("💰 Недостаточно монет!");
-    return;
-  }
-  coins-=10;
-  const c = characters[currentChar];
-  if(type==="stamina") c.maxStamina +=5;
-  if(type==="damage") c.damage +=2;
-  if(type==="hp") { c.hpMax +=20; c.hp +=20; }
-  log(`✅ ${type==="stamina"?"Выносливость":type==="damage"?"Урон":"Макс ХП"} прокачан!`);
-  updateStats();
-}
+playerPos={x:newX,y:newY}; renderMap(); updateStats();  
+}  
 
-// === Смена персонажа ===
-function switchCharacter(){
-  currentChar=(currentChar+1)%characters.length;
-  log(`🔁 Переключено на ${characters[currentChar].name}`);
-  updateStats();
-  renderMap();
-}
+// Боевая система  
+function startBattle(enemy){  
+document.getElementById("map").classList.remove("active");  
+document.getElementById("battle").classList.add("active");  
+battleEnemyMax=enemy.hp; battleEnemyHp=enemy.hp;  
+battleStamina=characters[currentChar].maxStamina;  
+updateBattleStats(); log("⚔ Битва началась!"); battleInProgress=true;  
+setTimeout(enemyTurn,500);  
+}  
 
-// === Лог сообщений ===
-function log(msg){
-  document.getElementById("log").textContent=msg;
-}
+function enemyTurn(){  
+if(!battleInProgress) return;  
+const dmg=Math.floor(Math.random()*10)+5;  
+characters[currentChar].hp-=dmg; if(characters[currentChar].hp<0) characters[currentChar].hp=0;  
+attackEffect("👾",dmg); updateBattleStats(); log(`👾 Враг наносит ${dmg} урона!`);  
+if(characters[currentChar].hp<=0){ endBattle(false); }  
+else { log("🗡 Ваш ход!"); }  
+}  
 
-// === Инициализация ===
-generateMap();
-renderMap();
-updateStats();
+function playerTurn(type){  
+if(!battleInProgress) return;  
+const cost=type==="attack"?8:15;  
+if(battleStamina<cost){ log("⚡ Недостаточно выносливости!"); return; }  
+battleStamina-=cost;  
+updateBattleStats();  
+const dmg=type==="attack"?characters[currentChar].damage:characters[currentChar].damage*2;  
+battleEnemyHp-=dmg; if(battleEnemyHp<0) battleEnemyHp=0;  
+attackEffect(type==="attack"?"🗡":"💥",dmg); log(`${type==="attack"?"🗡 Атака!":"💥 Навык!"} Нанесено ${dmg} урона!`);  
+updateBattleStats();  
+if(battleEnemyHp<=0){ coins+=10; log("🎉 Победа! Получено 10💰"); endBattle(true); }  
+else { setTimeout(enemyTurn,800); }  
+}  
+
+function attackEffect(symbol,dmg){  
+const eff=document.createElement("div"); eff.className="attack-effect";  
+eff.style.left=(Math.random()*200+50)+"px"; eff.style.top=(Math.random()*200+50)+"px"; eff.textContent=symbol+"-"+dmg;  
+document.getElementById("game").appendChild(eff); setTimeout(()=>{eff.remove();},300);  
+}  
+
+function endBattle(victory){  
+battleInProgress=false;  
+document.getElementById("battle").classList.remove("active");  
+document.getElementById("map").classList.add("active");  
+if(!victory){ log("💀 Вы проиграли! ХП восстановлено."); characters[currentChar].hp=characters[currentChar].hpMax; }  
+renderMap(); updateStats();  
+}  
+
+function updateBattleStats(){  
+const c=characters[currentChar];  
+document.getElementById("enemyHp").textContent=battleEnemyHp;  
+document.getElementById("enemyHpMax").textContent=battleEnemyMax;  
+document.getElementById("playerHp").textContent=c.hp;  
+document.getElementById("playerHpMax").textContent=c.hpMax;  
+document.getElementById("battleStamina").textContent=battleStamina;  
+document.getElementById("battleStaminaMax").textContent=c.maxStamina;  
+}  
+
+// Обновление интерфейса  
+function updateStats(){  
+const c=characters[currentChar];  
+document.getElementById("charName").textContent=c.name;  
+document.getElementById("level").textContent=c.level;  
+document.getElementById("xp").textContent=c.xp;  
+document.getElementById("charHp").textContent=c.hp;  
+document.getElementById("charHpMax").textContent=c.hpMax;  
+document.getElementById("stamina").textContent=c.maxStamina;  
+document.getElementById("staminaMax").textContent=c.maxStamina;  
+document.getElementById("coins").textContent=coins;  
+document.getElementById("menuCoins").textContent=coins;  
+document.getElementById("inventory").textContent=inventory.length?inventory.join(", "):"Пусто";  
+if(battleInProgress) updateBattleStats();  
+}  
+
+// Прокачка  
+function toggleUpgradeMenu(){ document.getElementById("upgradeMenu").classList.toggle("active"); }  
+function upgrade(type){  
+if(coins<10){ log("💰 Недостаточно монет!"); return; }  
+coins-=10; const c=characters[currentChar];  
+if(type==="stamina") c.maxStamina+=5;  
+if(type==="damage") c.damage+=2;  
+if(type==="hp"){ c.hpMax+=20; c.hp+=20; if(c.hp>c.hpMax) c.hp=c.hpMax; }  
+log(`✅ ${type==="stamina"?"Выносливость":type==="damage"?"Урон":"Макс ХП"} прокачан!`); updateStats();  
+}  
+
+// Смена персонажа  
+function switchCharacter(){ currentChar=(currentChar+1)%characters.length; log(`🔁 Переключено на ${characters[currentChar].name}`); updateStats(); renderMap(); }  
+
+// Лог  
+function log(msg){ document.getElementById("log").textContent=msg; }  
+
+// Инициализация  
+generateMap(); renderMap(); updateStats();  
 </script>
 </body>
 </html>
